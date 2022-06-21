@@ -1,0 +1,13 @@
+name: rake
+
+on:
+  push:
+    branches: [ master, main ]
+    tags: [ v* ]
+  pull_request:
+
+jobs:
+  rake:
+    uses: metanorma/metanorma-build-scripts/.github/workflows/generic-rake.yml@main
+    secrets:
+      pat_token: ${{ secrets.METANORMA_CI_PAT_TOKEN }}
