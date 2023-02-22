@@ -1,0 +1,265 @@
+---
+termid: 102-01-02
+term: set
+deu:
+  id: 102-01-02
+  terms:
+  - type: expression
+    normative_status: preferred
+    designation: Menge
+    grammar_info:
+    - preposition: false
+      participle: false
+      adj: false
+      verb: false
+      adverb: false
+      noun: false
+      gender:
+      - f
+      number:
+      - singular
+  definition:
+  - {}
+  notes: []
+  examples: []
+  language_code: deu
+  entry_status: valid
+  dates:
+  - type: accepted
+  - type: amended
+  review_decision_event: published
+eng:
+  id: 102-01-02
+  related:
+  - type: supersedes
+    ref:
+      source: IEV
+      id: 102-01-02
+      version: 2007-08
+  terms:
+  - type: expression
+    normative_status: preferred
+    designation: set
+  definition:
+  - content: collection of distinguishable entities such that for any entity it is
+      determined without ambiguity whether it belongs to the collection or not
+  notes:
+  - content: The concept of set is a primitive concept in mathematics.
+  - content: Terms and symbols concerning sets are given in ISO 80000-2:2009, Clause
+      5.
+  examples: []
+  language_code: eng
+  entry_status: valid
+  dates:
+  - type: accepted
+    date: '2017-07-01T00:00:00+00:00'
+  - type: amended
+    date: '2017-07-01T00:00:00+00:00'
+  review_date: '2017-07-01T00:00:00+00:00'
+  review_decision_date: '2017-07-01T00:00:00+00:00'
+  review_decision_event: published
+spa:
+  id: 102-01-02
+  terms:
+  - type: expression
+    normative_status: preferred
+    designation: conjunto
+  definition:
+  - {}
+  notes: []
+  examples: []
+  language_code: spa
+  entry_status: valid
+  dates:
+  - type: accepted
+    date: '2007-08-01T00:00:00+00:00'
+  - type: amended
+    date: '2007-08-01T00:00:00+00:00'
+  review_date: '2007-08-01T00:00:00+00:00'
+  review_decision_date: '2007-08-01T00:00:00+00:00'
+  review_decision_event: published
+fra:
+  id: 102-01-02
+  terms:
+  - type: expression
+    normative_status: preferred
+    designation: ensemble
+    grammar_info:
+    - preposition: false
+      participle: false
+      adj: false
+      verb: false
+      adverb: false
+      noun: false
+      gender:
+      - m
+      number:
+      - singular
+  definition:
+  - content: collection d'entités distinctes telle que, pour toute entité, on peut
+      déterminer sans ambiguïté si elle appartient ou non à la collection
+  notes:
+  - content: Le concept d'ensemble est un concept primitif des mathématiques.
+  - content: Des termes et symboles relatifs aux ensembles sont donnés dans l'ISO
+      80000-2:2009, Article 5.
+  examples: []
+  language_code: fra
+  entry_status: valid
+  dates:
+  - type: accepted
+  - type: amended
+  review_decision_event: published
+jpn:
+  id: 102-01-02
+  terms:
+  - type: expression
+    normative_status: preferred
+    designation: 集合
+  definition:
+  - {}
+  notes: []
+  examples: []
+  language_code: jpn
+  entry_status: valid
+  dates:
+  - type: accepted
+  - type: amended
+  review_decision_event: published
+kor:
+  id: 102-01-02
+  terms:
+  - type: expression
+    normative_status: preferred
+    designation: 집합
+  definition:
+  - {}
+  notes: []
+  examples: []
+  language_code: kor
+  entry_status: valid
+  dates:
+  - type: accepted
+  - type: amended
+  review_decision_event: published
+nld:
+  id: 102-01-02
+  terms:
+  - type: expression
+    normative_status: preferred
+    designation: verzameling
+    grammar_info:
+    - preposition: false
+      participle: false
+      adj: false
+      verb: false
+      adverb: false
+      noun: false
+      gender:
+      - f
+      number:
+      - singular
+  definition:
+  - {}
+  notes: []
+  examples: []
+  language_code: nld
+  entry_status: valid
+  dates:
+  - type: accepted
+  - type: amended
+  review_decision_event: published
+pol:
+  id: 102-01-02
+  terms:
+  - type: expression
+    normative_status: preferred
+    designation: zbiór
+    grammar_info:
+    - preposition: false
+      participle: false
+      adj: false
+      verb: false
+      adverb: false
+      noun: false
+      gender:
+      - m
+      number:
+      - singular
+  definition:
+  - {}
+  notes: []
+  examples: []
+  language_code: pol
+  entry_status: valid
+  dates:
+  - type: accepted
+  - type: amended
+  review_decision_event: published
+por:
+  id: 102-01-02
+  terms:
+  - type: expression
+    normative_status: preferred
+    designation: conjunto
+  definition:
+  - {}
+  notes: []
+  examples: []
+  language_code: por
+  entry_status: valid
+  dates:
+  - type: accepted
+  - type: amended
+  review_decision_event: published
+srp:
+  id: 102-01-02
+  terms:
+  - type: expression
+    normative_status: preferred
+    designation: скуп
+  definition:
+  - {}
+  notes: []
+  examples: []
+  language_code: srp
+  entry_status: valid
+  dates:
+  - type: accepted
+  - type: amended
+  review_decision_event: published
+swe:
+  id: 102-01-02
+  terms:
+  - type: expression
+    normative_status: preferred
+    designation: mängd
+  definition:
+  - {}
+  notes: []
+  examples: []
+  language_code: swe
+  entry_status: valid
+  dates:
+  - type: accepted
+    date: '2007-08-01T00:00:00+00:00'
+  - type: amended
+    date: '2007-08-01T00:00:00+00:00'
+  review_date: '2007-08-01T00:00:00+00:00'
+  review_decision_date: '2007-08-01T00:00:00+00:00'
+  review_decision_event: published
+zho:
+  id: 102-01-02
+  terms:
+  - type: expression
+    normative_status: preferred
+    designation: 集合
+  definition:
+  - {}
+  notes: []
+  examples: []
+  language_code: zho
+  entry_status: valid
+  dates:
+  - type: accepted
+  - type: amended
+  review_decision_event: published

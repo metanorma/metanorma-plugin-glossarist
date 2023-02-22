@@ -1,5 +1,11 @@
 require "bundler/setup"
-require "metanorma/plugin/glossarist"
+require "metanorma-plugin-glossarist"
+
+# Register GlossaristProcessor as first preprocessor in line in order
+# to test properly with metanorma-standoc
+Asciidoctor::Extensions.register do
+  preprocessor Metanorma::Plugin::Glossarist::DatasetPreprocessor
+end
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure

@@ -1,4 +1,6 @@
 require "metanorma/plugin/glossarist/version"
+require "metanorma/plugin/glossarist/document"
+require "metanorma/plugin/glossarist/dataset_preprocessor"
 
 module Metanorma
   module Plugin
