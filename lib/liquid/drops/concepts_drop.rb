@@ -31,19 +31,20 @@ module Liquid
       private
 
       def filtered_concepts(concepts_collection, filters)
+        concept_filters = filters.dup
+        language_filter = concept_filters.delete('lang')
+
         concepts_collection.to_h["managed_concepts"].map do |concept|
           filtered_concept = concept.dup
           filtered_concept.each do |field, concept_hash|
             next if NON_LANGUAGE_FIELDS.include?(field)
 
-            if language_field?(field) && filters['lang'] && !allowed_languages(filters['lang']).include?(field.strip)
+            unless allowed_language?(field, language_filter)
               filtered_concept.delete(field)
               next
             end
 
-            filters.each do |name, value|
-              next if name == "lang"
-
+            concept_filters.each do |name, value|
               fields = extract_nested_field_names(name)
 
               if filtered_concept.dig(*fields) != value
@@ -68,12 +69,11 @@ module Liquid
         end
       end
 
-      def language_field?(field_name)
-        !NON_LANGUAGE_FIELDS.include?(field_name)
-      end
+      def allowed_language?(language, lang_filter)
+        return false if NON_LANGUAGE_FIELDS.include?(language)
+        return true unless lang_filter
 
-      def allowed_languages(languages_string)
-        languages_string.split(",").map(&:strip)
+        language&.strip == lang_filter&.strip
       end
 
       def except(hash, keys)
