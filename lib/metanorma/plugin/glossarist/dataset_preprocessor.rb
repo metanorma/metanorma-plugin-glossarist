@@ -177,7 +177,7 @@ module Metanorma
           liquid_doc.add_content(
             dataset.concepts.map do |_concept_name, concept|
               concept_bibliography(concept)
-            end.join("\n")
+            end.compact.sort.join("\n")
           )
         end
 
@@ -191,13 +191,15 @@ module Metanorma
         end
 
         def concept_bibliography(concept)
-          concept["eng"]["sources"].map do |source|
+          bibliography = concept["eng"]["sources"].map do |source|
             ref = source["origin"]["ref"]
             next if @rendered_bibliographies[ref]
 
             @rendered_bibliographies[ref] = ref.gsub(/[ \/:]/, '_')
             "* [[[#{@rendered_bibliographies[ref]},#{ref}]]]"
           end.compact.join("\n")
+
+          bibliography == "" ? nil : bibliography
         end
 
         def prepare_dataset_contexts(document, contexts)

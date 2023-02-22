@@ -211,8 +211,8 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
 
       let(:expected_output) do
         <<~OUTPUT.strip
-          * [[[ISO_TS_14812_2023,ISO/TS 14812:2023]]]
           * [[[ISO_TS_14812_2022,ISO/TS 14812:2022]]]
+          * [[[ISO_TS_14812_2023,ISO/TS 14812:2023]]]
         OUTPUT
       end
 
