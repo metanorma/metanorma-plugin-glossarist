@@ -33,8 +33,9 @@ module Liquid
       def filtered_concepts(concepts_collection, filters)
         concept_filters = filters.dup
         language_filter = concept_filters.delete('lang')
+        sort_filter = concept_filters.delete('sort_by')
 
-        concepts_collection.to_h["managed_concepts"].map do |concept|
+        concepts = concepts_collection.to_h["managed_concepts"].map do |concept|
           filtered_concept = concept.dup
           filtered_concept.each do |field, concept_hash|
             next if NON_LANGUAGE_FIELDS.include?(field)
@@ -59,6 +60,14 @@ module Liquid
             filtered_concept
           end
         end.compact
+
+        apply_sort_filter(concepts, sort_filter)
+      end
+
+      def apply_sort_filter(concepts, sort_by)
+        return concepts unless sort_by
+
+        concepts.sort_by { |concept| concept.dig(*extract_nested_field_names(sort_by)) }
       end
 
       def extract_nested_field_names(name)
