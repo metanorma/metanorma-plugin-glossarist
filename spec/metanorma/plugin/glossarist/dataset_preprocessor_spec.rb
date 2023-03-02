@@ -80,6 +80,59 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
           end
         end
 
+        describe "filter='sort_by=term'" do
+          let(:reader) do
+            Asciidoctor::Reader.new <<~TEMPLATE
+              some text before glossarist block
+
+              === Section 1
+              [glossarist,./spec/fixtures/dataset1,filter='sort_by=term',concepts]
+              ----
+              {% for concept in concepts %}
+              ==== {{ concept.term }}
+
+              {{ concept.eng.definition[0].content }}
+              {% endfor %}
+              ----
+
+              some text after glossarist block
+            TEMPLATE
+          end
+
+          let(:expected_output) do
+            <<~OUTPUT.strip
+              some text before glossarist block
+
+              === Section 1
+
+
+              ==== biological entity
+
+              {{material entity}} that was or is a living organism
+
+              ==== entity
+
+              concrete or abstract thing that exists, did exist, or can possibly exist, including associations among these things
+
+              ==== material entity
+
+              {{entity}} that occupies three-dimensional space
+
+              ==== person
+
+              {{biological entity}} that is a human being
+
+
+
+              some text after glossarist block
+            OUTPUT
+          end
+
+          it "should render correct output" do
+            expect(subject.process(document, reader).source).to eq(expected_output)
+          end
+        end
+
         describe "filter='lang=eng;eng.terms.0.designation=entity'" do
           let(:reader) do
             Asciidoctor::Reader.new <<~TEMPLATE
