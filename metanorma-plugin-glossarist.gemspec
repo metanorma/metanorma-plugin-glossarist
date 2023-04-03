@@ -22,7 +22,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_dependency "asciidoctor", "~> 2.0.0"
-  spec.add_dependency "glossarist-new"
+  spec.add_dependency "glossarist"
   spec.add_dependency "liquid", "~> 4"
 
   spec.add_development_dependency "pry"

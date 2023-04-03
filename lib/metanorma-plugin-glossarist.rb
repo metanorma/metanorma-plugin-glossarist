@@ -9,4 +9,8 @@ module Metanorma
       # Your code goes here...
     end
   end
+
+  Asciidoctor::Extensions.register do
+    preprocessor Metanorma::Plugin::Glossarist::DatasetPreprocessor
+  end
 end
