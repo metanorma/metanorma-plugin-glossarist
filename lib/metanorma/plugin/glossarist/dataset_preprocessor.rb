@@ -59,20 +59,23 @@ module Metanorma
         #     format
         def initialize(config = {})
           super
-          @document = Document.new
+          @config = config
           @datasets = {}
           @rendered_bibliographies = {}
         end
 
         def process(document, reader)
           input_lines = reader.readlines.to_enum
+
           file_system = ::Liquid::LocalFileSystem.new(
             relative_file_path(document, ""),
           )
 
+          @config[:file_system] = file_system
+
           processed_doc = prepare_document(document, input_lines)
           Asciidoctor::Reader.new(
-            processed_doc.render_liquid(file_system: file_system).split("\n"),
+            processed_doc.to_s.split("\n"),
           )
         end
 
@@ -80,6 +83,7 @@ module Metanorma
 
         def prepare_document(document, input_lines, end_mark = nil)
           liquid_doc = Document.new
+          liquid_doc.file_system = @config[:file_system]
 
           loop do
             current_line = input_lines.next
@@ -120,7 +124,10 @@ module Metanorma
             {% endwith_glossarist_context %}
           TEMPLATE
 
-          liquid_doc.add_content(dataset_section)
+          liquid_doc.add_content(
+            dataset_section,
+            render: true,
+          )
         end
 
         def process_glossarist_block(document, liquid_doc, input_lines, match)
@@ -135,7 +142,10 @@ module Metanorma
             {% endwith_glossarist_context %}
           TEMPLATE
 
-          liquid_doc.add_content(glossarist_section)
+          liquid_doc.add_content(
+            glossarist_section,
+            render: true,
+          )
         end
 
         def prepare_glossarist_block_params(document, match)
@@ -193,6 +203,7 @@ module Metanorma
         def concept_bibliography(concept)
           bibliography = concept["eng"]["sources"].map do |source|
             ref = source["origin"]["ref"]
+
             next if @rendered_bibliographies[ref]
 
             @rendered_bibliographies[ref] = ref.gsub(/[ \/:]/, '_')
