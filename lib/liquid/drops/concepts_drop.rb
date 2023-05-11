@@ -34,6 +34,7 @@ module Liquid
         concept_filters = filters.dup
         language_filter = concept_filters.delete('lang')
         sort_filter = concept_filters.delete('sort_by')
+        group_filter = concept_filters.delete('group')
 
         concepts = concepts_collection.to_h["managed_concepts"].map do |concept|
           filtered_concept = concept.dup
@@ -61,6 +62,7 @@ module Liquid
           end
         end.compact
 
+        apply_group_filter(concepts, group_filter)
         apply_sort_filter(concepts, sort_filter)
       end
 
@@ -68,6 +70,16 @@ module Liquid
         return concepts unless sort_by
 
         concepts.sort_by { |concept| concept.dig(*extract_nested_field_names(sort_by)) }
+      end
+
+      def apply_group_filter(concepts, groups)
+        return concepts unless groups
+
+        concepts.select! do |concept|
+          groups.split(",").reduce(true) do |pre_result, group|
+            pre_result && concept["groups"].include?(group.strip)
+          end
+        end
       end
 
       def extract_nested_field_names(name)
