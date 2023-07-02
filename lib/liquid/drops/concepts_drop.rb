@@ -48,9 +48,17 @@ module Liquid
 
             concept_filters.each do |name, value|
               fields = extract_nested_field_names(name)
+              if fields.last.start_with?("start_with")
+                value = fields.last.gsub(/start_with\(([^\)]*)\)/, '\1')
+                fields = fields[0..-2]
 
-              if filtered_concept.dig(*fields) != value
-                filtered_concept.delete(field)
+                unless filtered_concept.dig(*fields).start_with?(value)
+                  filtered_concept.delete(field)
+                end
+              else
+                if filtered_concept.dig(*fields) != value
+                  filtered_concept.delete(field)
+                end
               end
             end
           end

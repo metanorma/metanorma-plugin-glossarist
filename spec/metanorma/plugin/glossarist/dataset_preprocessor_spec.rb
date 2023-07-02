@@ -214,6 +214,43 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
             expect(subject.process(document, reader).source).to eq(expected_output)
           end
         end
+
+        describe "filter='eng.terms.0.designation=entity'" do
+          let(:reader) do
+            Asciidoctor::Reader.new <<~TEMPLATE
+              some text before glossarist block
+
+              === Section 1
+              [glossarist,./spec/fixtures/dataset1,filter='eng.terms.0.designation.start_with(enti)',concepts]
+              ----
+              {%- for concept in concepts -%}
+              ==== {{ concept.term }}
+
+              {{ concept.eng.definition[0].content }}
+              {%- endfor -%}
+              ----
+
+              some text after glossarist block
+            TEMPLATE
+          end
+
+          let(:expected_output) do
+            <<~OUTPUT.strip
+              some text before glossarist block
+
+              === Section 1
+              ==== entity
+
+              concrete or abstract thing that exists, did exist, or can possibly exist, including associations among these things
+
+              some text after glossarist block
+            OUTPUT
+          end
+
+          it "should render correct output" do
+            expect(subject.process(document, reader).source).to eq(expected_output)
+          end
+        end
       end
     end
 
