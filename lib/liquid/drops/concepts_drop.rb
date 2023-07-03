@@ -4,7 +4,7 @@ module Liquid
   module Drops
     class ConceptsDrop < Liquid::Drop
       # rubocop:disable Lint/MissingSuper
-      NON_LANGUAGE_FIELDS = %w[term termid].freeze
+      NON_LANGUAGE_FIELDS = %w[term termid groups].freeze
 
       def initialize(managed_concept_collection, filters = {})
         @concepts_collection = managed_concept_collection
@@ -55,10 +55,8 @@ module Liquid
                 unless filtered_concept.dig(*fields).start_with?(value)
                   filtered_concept.delete(field)
                 end
-              else
-                if filtered_concept.dig(*fields) != value
-                  filtered_concept.delete(field)
-                end
+              elsif filtered_concept.dig(*fields) != value
+                filtered_concept.delete(field)
               end
             end
           end
