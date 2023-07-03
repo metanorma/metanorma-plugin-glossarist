@@ -91,6 +91,12 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
               {% for concept in concepts %}
               ==== {{ concept.term }}
 
+              {%- if concept.eng.terms.size > 1 %}
+              {%- for term in concept.eng.terms offset:1 %}
+              {% if term.normative_status %}{{ term.normative_status }}{% else %}alt{% endif %}:[{{ term.designation }}]
+              {%- endfor %}
+              {%- endif %}
+
               {{ concept.eng.definition[0].content }}
               {% endfor %}
               ----
@@ -111,6 +117,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
               {{material entity}} that was or is a living organism
 
               ==== entity
+              admitted:[E]
 
               concrete or abstract thing that exists, did exist, or can possibly exist, including associations among these things
 
@@ -290,7 +297,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
         <<~OUTPUT.strip
           === Render Section
           ==== entity
-
+          admitted:[E]
 
           concrete or abstract thing that exists, did exist, or can possibly exist, including associations among these things
 

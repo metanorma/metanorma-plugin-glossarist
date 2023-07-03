@@ -8,6 +8,9 @@ eng:
   - type: expression
     normative_status: preferred
     designation: entity
+  - type: expression
+    normative_status: admitted
+    designation: E
   definition:
   - content: concrete or abstract thing that exists, did exist, or can possibly exist,
       including associations among these things
