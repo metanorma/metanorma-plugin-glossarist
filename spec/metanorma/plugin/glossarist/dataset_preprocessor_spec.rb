@@ -222,7 +222,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
           end
         end
 
-        describe "filter='eng.terms.0.designation=entity'" do
+        describe "filter='eng.terms.0.designation.start_with(enti)'" do
           let(:reader) do
             Asciidoctor::Reader.new <<~TEMPLATE
               some text before glossarist block
