@@ -27,11 +27,20 @@ module Liquid
         end
       end
 
+      def load_collection(folder_path)
+        @@collections ||= {}
+
+        return @@collections[folder_path] if @@collections[folder_path]
+
+        collection = ::Glossarist::ManagedConceptCollection.new
+        collection.load_from_files(folder_path)
+        @@collections[folder_path] = collection
+      end
+
       def render(context)
         @contexts.each do |local_context|
           context_file = local_context[:file_path].strip
-          collection = ::Glossarist::ManagedConceptCollection.new
-          collection.load_from_files(context_file)
+          collection = load_collection(context_file)
 
           context[local_context[:name]] = Liquid::Drops::ConceptsDrop.new(collection, @filters)
         end
