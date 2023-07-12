@@ -26,7 +26,11 @@ module Metanorma
         def render_liquid(file_content)
           template = Liquid::Template.parse(file_content)
           template.registers[:file_system] = file_system
-          template.render(strict_variables: false, error_mode: :warn)
+          rendered_template = template.render(strict_variables: false, error_mode: :warn)
+
+          return rendered_template unless template.errors.any?
+
+          raise template.errors.first.cause
         end
       end
     end
