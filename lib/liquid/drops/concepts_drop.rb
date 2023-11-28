@@ -3,9 +3,9 @@
 module Liquid
   module Drops
     class ConceptsDrop < Liquid::Drop
-      # rubocop:disable Lint/MissingSuper
-      NON_LANGUAGE_FIELDS = %w[term termid groups].freeze
+      NON_LANGUAGE_FIELDS = %w[identifier localized_concepts groups term].freeze
 
+      # rubocop:disable Lint/MissingSuper
       def initialize(managed_concept_collection, filters = {})
         @concepts_collection = managed_concept_collection
         @concepts_map = {}
@@ -36,40 +36,61 @@ module Liquid
         sort_filter = concept_filters.delete('sort_by')
         group_filter = concept_filters.delete('group')
 
-        concepts = concepts_collection.to_h["managed_concepts"].map do |concept|
-          filtered_concept = concept.dup
-          filtered_concept.each do |field, concept_hash|
-            next if NON_LANGUAGE_FIELDS.include?(field)
+        concepts = concepts_collection.map do |concept|
+          filtered_concept = concept.to_h["data"]
+          filtered_concept["term"] = concept.default_designation
 
-            unless allowed_language?(field, language_filter)
-              filtered_concept.delete(field)
-              next
-            end
+          filtered_concept = filtered_concept.merge(
+            extract_localized_concepts(
+              concept,
+              language_filter,
+            ),
+          )
 
-            concept_filters.each do |name, value|
-              fields = extract_nested_field_names(name)
-              if fields.last.start_with?("start_with")
-                value = fields.last.gsub(/start_with\(([^\)]*)\)/, '\1')
-                fields = fields[0..-2]
-
-                unless filtered_concept.dig(*fields).start_with?(value)
-                  filtered_concept.delete(field)
-                end
-              elsif filtered_concept.dig(*fields) != value
-                filtered_concept.delete(field)
-              end
-            end
-          end
-
-          if filtered_concept.keys & NON_LANGUAGE_FIELDS == filtered_concept.keys
-            nil
-          else
+          if retain_concept?(filtered_concept, concept_filters)
             filtered_concept
+          else
+            nil
           end
         end.compact
 
         apply_group_filter(concepts, group_filter)
         apply_sort_filter(concepts, sort_filter)
+      end
+
+      def extract_localized_concepts(concept, languages)
+        localized_concepts = {}
+
+        if !languages || languages.empty?
+          concept.localized_concepts.each do |lang, localized_concept_uuid|
+            localized_concepts[lang] = concept.localizations[lang].to_h["data"]
+          end
+        else
+          languages.split(",").each do |lang|
+            localization = concept.localizations[lang]&.to_h&.dig("data")
+            localized_concepts[lang] = localization if localization
+          end
+        end
+
+        localized_concepts
+      end
+
+      def retain_concept?(filtered_concept, concept_filters)
+        concept_filters.each do |name, value|
+          fields = extract_nested_field_names(name)
+          if fields.last.start_with?("start_with")
+            value = fields.last.gsub(/start_with\(([^\)]*)\)/, '\1')
+            fields = fields[0..-2]
+
+            unless filtered_concept.dig(*fields).start_with?(value)
+              return false
+            end
+          elsif filtered_concept.dig(*fields) != value
+            return false
+          end
+        end
+
+        filtered_concept.keys & NON_LANGUAGE_FIELDS != filtered_concept.keys
       end
 
       def apply_sort_filter(concepts, sort_by)

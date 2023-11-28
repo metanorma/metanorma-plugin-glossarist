@@ -12,7 +12,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
               some text before glossarist block
 
               === Section 1
-              [glossarist,./spec/fixtures/dataset1,concepts]
+              [glossarist,./spec/fixtures/dataset-glossarist-v2,concepts]
               ----
               ==== {{ concepts['entity'].term }}
 
@@ -50,7 +50,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
                 some text before glossarist block
 
                 === Section 1
-                [glossarist,./spec/fixtures/dataset1,filter='lang=ara',concepts]
+                [glossarist,./spec/fixtures/dataset-glossarist-v2,filter='lang=ara',concepts]
                 ----
                 {% for concept in concepts %}
                 ==== {{ concept.term }}
@@ -81,13 +81,54 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
             end
           end
 
+          describe "filter='lang=deu'" do
+            let(:reader) do
+              Asciidoctor::Reader.new <<~TEMPLATE
+                some text before glossarist block
+
+                === Section 1
+                [glossarist,./spec/fixtures/dataset-glossarist-v2,filter='lang=deu',concepts]
+                ----
+                {% for concept in concepts %}
+                ==== {{ concept.term }}
+
+                {{ concept.deu.definition[0].content }}
+                {% endfor %}
+                ----
+
+                some text after glossarist block
+              TEMPLATE
+            end
+
+            let(:expected_output) do
+              <<~OUTPUT.strip
+                some text before glossarist block
+
+                === Section 1
+
+
+                ==== person
+
+                biologische entiteit dat is een mens wezen
+
+
+
+                some text after glossarist block
+              OUTPUT
+            end
+
+            it "should render correct output" do
+              expect(subject.process(document, reader).source).to eq(expected_output)
+            end
+          end
+
           describe "filter='sort_by=term'" do
             let(:reader) do
               Asciidoctor::Reader.new <<~TEMPLATE
                 some text before glossarist block
 
                 === Section 1
-                [glossarist,./spec/fixtures/dataset1,filter='sort_by=term',concepts]
+                [glossarist,./spec/fixtures/dataset-glossarist-v2,filter='sort_by=term',concepts]
                 ----
                 {% for concept in concepts %}
                 ==== {{ concept.term }}
@@ -147,7 +188,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
                 some text before glossarist block
 
                 === Section 1
-                [glossarist,./spec/fixtures/dataset1,filter='group=foo;sort_by=term',concepts]
+                [glossarist,./spec/fixtures/dataset-glossarist-v2,filter='group=foo;sort_by=term',concepts]
                 ----
                 {% for concept in concepts %}
                 ==== {{ concept.term }}
@@ -192,7 +233,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
                 some text before glossarist block
 
                 === Section 1
-                [glossarist,./spec/fixtures/dataset1,filter='lang=eng;eng.terms.0.designation=entity',concepts]
+                [glossarist,./spec/fixtures/dataset-glossarist-v2,filter='lang=eng;eng.terms.0.designation=entity',concepts]
                 ----
                 {%- for concept in concepts -%}
                 ==== {{ concept.term }}
@@ -229,7 +270,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
                 some text before glossarist block
 
                 === Section 1
-                [glossarist,./spec/fixtures/dataset1,filter='eng.terms.0.designation.start_with(enti)',concepts]
+                [glossarist,./spec/fixtures/dataset-glossarist-v2,filter='eng.terms.0.designation.start_with(enti)',concepts]
                 ----
                 {%- for concept in concepts -%}
                 ==== {{ concept.term }}
@@ -265,7 +306,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
       context "[load dataset]" do
         let(:reader) do
           Asciidoctor::Reader.new <<~TEMPLATE
-            :glossarist-dataset: dataset1:./spec/fixtures/dataset1
+            :glossarist-dataset: dataset1:./spec/fixtures/dataset-glossarist-v2
 
             === Render Section
             {{ dataset1['entity']['eng'].definition[0].content }}
@@ -287,7 +328,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
       context "[render concept]" do
         let(:reader) do
           Asciidoctor::Reader.new <<~TEMPLATE
-            :glossarist-dataset: dataset1:./spec/fixtures/dataset1
+            :glossarist-dataset: dataset1:./spec/fixtures/dataset-glossarist-v2
 
             === Render Section
             glossarist::render[dataset1, entity]
@@ -326,7 +367,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
       context "[render bibliography entry]" do
         let(:reader) do
           Asciidoctor::Reader.new <<~TEMPLATE
-            :glossarist-dataset: dataset1:./spec/fixtures/dataset1
+            :glossarist-dataset: dataset1:./spec/fixtures/dataset-glossarist-v2
 
             glossarist::render_bibliography_entry[dataset1, entity]
           TEMPLATE
@@ -346,7 +387,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
       context "[render bibliography]" do
         let(:reader) do
           Asciidoctor::Reader.new <<~TEMPLATE
-            :glossarist-dataset: dataset1:./spec/fixtures/dataset1
+            :glossarist-dataset: dataset1:./spec/fixtures/dataset-glossarist-v2
 
             glossarist::render_bibliography[dataset1]
           TEMPLATE

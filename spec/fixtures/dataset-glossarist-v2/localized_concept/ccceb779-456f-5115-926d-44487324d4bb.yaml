@@ -1,9 +1,4 @@
----
-termid: 3.1.1.1
-term: entity
-groups:
-- foo
-eng:
+data:
   terms:
   - type: expression
     normative_status: preferred
