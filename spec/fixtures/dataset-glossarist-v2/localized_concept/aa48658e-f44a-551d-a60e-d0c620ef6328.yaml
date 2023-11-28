@@ -1,0 +1,18 @@
+data:
+  terms:
+  - type: expression
+    normative_status: preferred
+    designation: persoon
+  definition:
+  - content: "biologische entiteit dat is een mens
+      wezen"
+  notes: []
+  examples: []
+  language_code: deu
+  entry_status: valid
+  sources:
+  - type: authoritative
+    origin:
+      ref: ISO/TS 14812:2022
+      clause: 3.1.1.6
+      link: https://www.iso.org/standard/79779.html

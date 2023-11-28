@@ -1,16 +1,11 @@
----
-termid: 3.1.1.5
-term: biological entity
-groups:
-- bar
-eng:
+data:
   terms:
   - type: expression
     normative_status: preferred
-    designation: biological entity
+    designation: person
   definition:
-  - content: "{{material entity}} that was or is a living
-      organism"
+  - content: "{{biological entity}} that is a human
+      being"
   notes: []
   examples: []
   language_code: eng
@@ -18,6 +13,6 @@ eng:
   sources:
   - type: authoritative
     origin:
-      ref: ISO/TS 14812:2023
-      clause: 3.1.1.5
+      ref: ISO/TS 14812:2022
+      clause: 3.1.1.6
       link: https://www.iso.org/standard/79779.html
