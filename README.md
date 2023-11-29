@@ -1,8 +1,6 @@
 # Metanorma::Plugin::Glossarist
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/metanorma/plugin/glossarist`. To experiment with that code, run `bin/console` for an interactive prompt.
-
-TODO: Delete this and the text above, and describe your gem
+Metanorma plugin that allows you to access data from the glossarist dataset inside a Metanorma document.
 
 ## Installation
 
@@ -22,7 +20,271 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+In order to use the macros in Metanorma, add the gem gem `metanorma-plugin-glossarist` in your Gemfile.
+
+## Available Macros
+
+Currently, there are 6 macros available for this plugin and all of them support all [Liquid syntax expressions](https://shopify.github.io/liquid/basics/introduction/), including:
+
+- Loading Dataset
+  - `:glossarist-dataset: <dataset name>:<dataset path>`
+  - `[glossarist,<dataset path>, [filters], <dataset name>]`
+- Rendering a single term from loaded dataset `glossarist::render[<dataset name>, <term>]`
+- Rendering all terms from loaded dataset `glossarist::import[<dataset name>]`
+- Rendering bibliography for a single term in the dataset `glossarist::render_bibliography_entry[<dataset name>, <term>]`
+- Rendering bibliography for all terms in the dataset`glossarist::render_bibliography[<dataset name>]`
+
+### Loading Dataset
+
+There are 2 ways of loading a dataset
+1. Global syntax `:glossarist-dataset: <dataset name>:<dataset path>`
+2. Block syntax `[glossarist,<dataset path>, [filters], <dataset name>]`
+
+### Global syntax `:glossarist-dataset: <dataset name>:<dataset path>`
+
+This will load the glossarist data from `<dataset path>` into `<dataset name>` which can be used anywhere in the document after this line.
+
+#### Example
+
+Suppose we have a term named `foobar` in our dataset with the definition `The term foobar is used as metasyntactic variables and placeholder names in computer programming`
+
+```adoc
+:glossarist-dataset: dataset:./path/to/glossarist-dataset
+
+=== Section 1
+{{ dataset['foobar']['eng'].definition[0].content }}
+```
+
+this will output
+
+```adoc
+=== Section 1
+The term foobar is used as metasyntactic variables and placeholder names in computer programming
+```
+
+### Block syntax`[glossarist,<dataset path>, [filters], <dataset name>]`
+
+This will load the glossarist data from `<dataset path>` into `<dataset name>` which can be used in the given block. Filters are optional and can be used to filter and/or sort the loaded concepts from the glossarist dataset multiple filters can be added by separating them with a semicolon `;`. Filter can be added by adding `filter='<filters to apply>;<another filter>'`
+
+Available filters are:
+- `sort_by:<field name>`: will sort the dataset in ascending order of the given field values e.g `sort_by:term` will sort concepts in ascending order based on the term.
+- `<field name>:<values>`: will only load a concept if the value of the given field name is equal to the given value e.g `group=foo` will only load a concept if it has a group named `foo` or `lang=ara` will only load Arabic translations for all concepts.
+
+#### Example
+
+Suppose we have the following terms in our dataset
+
+| Name | Definition | Groups |
+| ----- | ----- | ----- |
+| foo | The term foo is used as metasyntactic variables and placeholder names in computer programming | foo |
+| bar | The term bar is used as metasyntactic variables and placeholder names in computer programming | foo, bar |
+| baz | The term baz is used as metasyntactic variables and placeholder names in computer programming | baz |
+
+```adoc
+=== Definitions
+[glossarist, /path/to/glossarist-dataset, dataset]
+----
+{%- for concept in dataset -%}
+==== {{ concept.term }}
+
+{{ concept.eng.definition[0].content }}
+{%- endfor -%}
+----
+```
+
+this will output
+
+```adoc
+=== Section 1
+
+==== foo
+
+The term foo is used as metasyntactic variables and placeholder names in computer programming
+
+==== bar
+
+The term bar is used as metasyntactic variables and placeholder names in computer programming
+
+==== baz
+
+The term baz is used as metasyntactic variables and placeholder names in computer programming
+```
+
+Applying sorting and filtering by group
+
+```adoc
+=== Definitions
+[glossarist, /path/to/glossarist-dataset, filter='group=foo;sort_by=term', dataset]
+----
+{%- for concept in dataset -%}
+==== {{ concept.term }}
+
+{{ concept.eng.definition[0].content }}
+{%- endfor -%}
+----
+```
+
+this will output
+
+```adoc
+=== Section 1
+
+==== bar
+
+The term bar is used as metasyntactic variables and placeholder names in computer programming
+
+==== foo
+
+The term foo is used as metasyntactic variables and placeholder names in computer programming
+```
+
+### Rendering a single term from loaded dataset
+
+This can be used to render a single concept from the loaded dataset. See [Loading Dataset](#loading-dataset) to load a dataset.
+This will use the [default template for rendering concepts](#default-template-for-rendering-concepts)
+
+#### Syntax
+
+`glossarist::render[<dataset name>, <term>]`
+
+#### Example
+
+Suppose we have a term named `foobar` in our dataset with the definition `The term foobar is used as metasyntactic variables and placeholder names in computer programming`
+
+```adoc
+:glossarist-dataset: dataset:./path/to/glossarist-dataset
+
+=== Section
+glossarist::render[dataset, foobar]
+```
+
+then the output will be
+
+```adoc
+=== Section
+==== entity
+concrete or abstract thing that exists, did exist, or can possibly exist, including associations among these things
+```
+
+### Rendering all terms from loaded dataset
+
+This will render all the concepts from the [loaded dataset](#loading-dataset) using [default template for rendering concepts](#default-template-for-rendering-concepts)
+
+#### Syntax
+
+`glossarist::import[<dataset name>]`
+
+
+### Rendering bibliography for a single term in the dataset
+
+This will render a bibliography for a single term in the [loaded dataset](#loading-dataset) using the [default template for bibliography](#default-template-for-bibliography)
+
+#### Syntax
+
+`glossarist::render_bibliography_entry[<dataset name>, <term>]`
+
+#### Example
+
+Suppose we have a concept `foo` with the ref `ISO/TS 14812:2022`, then we can render the bibliography for this like
+
+```adoc
+:glossarist-dataset: dataset:./path/to/glossarist-dataset
+
+glossarist::render_bibliography_entry[dataset, foo]
+```
+
+then the output will be
+
+```adoc
+* [[[ISO_TS_14812_2022,ISO/TS 14812:2022]]]
+```
+
+### Rendering bibliography for all terms in the dataset
+
+This will render all the bibliographies for the given dataset
+
+#### Syntax
+
+`glossarist::render_bibliography[<dataset name>]`
+
+#### Example
+
+Suppose we have following concepts in dataset
+
+- `foo` with ref `ISO/TS 14812:2022`
+- `bar` with ref `ISO/TS 14812:2023`
+
+then we can render the bibliography for this like
+
+```adoc
+:glossarist-dataset: dataset:./path/to/glossarist-dataset
+
+glossarist::render_bibliography[dataset]
+```
+
+then the output will be
+
+```adoc
+* [[[ISO_TS_14812_2022,ISO/TS 14812:2022]]]
+* [[[ISO_TS_14812_2023,ISO/TS 14812:2023]]]
+```
+
+
+### Default template for rendering concepts
+
+```adoc
+==== {{ concept.term }}
+<type>:[designation for the type]
+
+{{ dataset[<concept name>]['eng'].definition[0].content }}
+
+{% for example in <dataset name>[<concept name>]['eng'].examples %}
+[example]
+{{ example.content }}
+
+{% endfor %}
+
+{% for note in <dataset name>[<concept name>]['eng'].notes %}
+[NOTE]
+====
+{{ note.content }}
+====
+
+{% endfor %}
+
+{% for source in <dataset name>[<concept name>]['eng'].sources %}
+[.source]
+<<{{ source.origin.ref | replace: ' ', '_' | replace: '/', '_' | replace: ':', '_' }},{{ source.origin.clause }}>>
+
+{% endfor %}
+```
+
+#### Example
+
+```adoc
+==== foobar
+admitted:[E]
+
+The term foobar is used as metasyntactic variables and placeholder names in computer programming
+
+[example]
+example for the term
+
+[NOTE]
+====
+note for the term
+====
+
+[.source]
+<<ISO_TS_14812_2022,foo_bar_id>>
+```
+
+### Default template for bibliography
+
+```adoc
+* [[[{{ source.origin.ref | replace: ' ', '_' | replace: '/', '_' | replace: ':', '_' }},{{ source.origin.clause }},{{source.origin.ref}}]]]
+```
+
 
 ## Development
 
