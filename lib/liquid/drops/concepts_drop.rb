@@ -32,25 +32,20 @@ module Liquid
 
       def filtered_concepts(concepts_collection, filters)
         concept_filters = filters.dup
-        language_filter = concept_filters.delete('lang')
-        sort_filter = concept_filters.delete('sort_by')
-        group_filter = concept_filters.delete('group')
+        language_filter = concept_filters.delete("lang")
+        sort_filter = concept_filters.delete("sort_by")
+        group_filter = concept_filters.delete("group")
 
         concepts = concepts_collection.map do |concept|
           filtered_concept = concept.to_h["data"]
           filtered_concept["term"] = concept.default_designation
 
           filtered_concept = filtered_concept.merge(
-            extract_localized_concepts(
-              concept,
-              language_filter,
-            ),
+            extract_localized_concepts(concept, language_filter),
           )
 
           if retain_concept?(filtered_concept, concept_filters)
             filtered_concept
-          else
-            nil
           end
         end.compact
 
@@ -62,13 +57,13 @@ module Liquid
         localized_concepts = {}
 
         if !languages || languages.empty?
-          concept.localized_concepts.each do |lang, localized_concept_uuid|
+          concept.localized_concepts.each do |lang, _localized_concept_uuid|
             localized_concepts[lang] = concept.localizations[lang].to_h["data"]
           end
         else
           languages.split(",").each do |lang|
-            localization = concept.localizations[lang]&.to_h&.dig("data")
-            localized_concepts[lang] = localization if localization
+            localization = concept.localizations[lang]&.to_h&.dig("data") and
+              localized_concepts[lang] = localization
           end
         end
 
@@ -81,10 +76,8 @@ module Liquid
           if fields.last.start_with?("start_with")
             value = fields.last.gsub(/start_with\(([^\)]*)\)/, '\1')
             fields = fields[0..-2]
-
-            unless filtered_concept.dig(*fields).start_with?(value)
+            filtered_concept.dig(*fields).start_with?(value) or
               return false
-            end
           elsif filtered_concept.dig(*fields) != value
             return false
           end
@@ -96,7 +89,9 @@ module Liquid
       def apply_sort_filter(concepts, sort_by)
         return concepts unless sort_by
 
-        concepts.sort_by { |concept| concept.dig(*extract_nested_field_names(sort_by)) }
+        concepts.sort_by do |concept|
+          concept.dig(*extract_nested_field_names(sort_by))
+        end
       end
 
       def apply_group_filter(concepts, groups)
@@ -113,7 +108,7 @@ module Liquid
         name.split(".").map do |field|
           field_name = field.strip
 
-          field_name.match(/^\d+$/) ? field_name.to_i : field_name
+          /^\d+$/.match?(field_name) ? field_name.to_i : field_name
         end
       end
 

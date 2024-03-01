@@ -75,8 +75,7 @@ module Metanorma
 
           processed_doc = prepare_document(document, input_lines)
           Asciidoctor::PreprocessorReader.new(document,
-            processed_doc.to_s.split("\n"),
-          )
+                                              processed_doc.to_s.split("\n"))
         end
 
         private
@@ -176,7 +175,7 @@ module Metanorma
           liquid_doc.add_content(
             dataset.concepts.map do |concept_name, _concept|
               concept_template(context_name, concept_name)
-            end.join("\n")
+            end.join("\n"),
           )
         end
 
@@ -187,7 +186,7 @@ module Metanorma
           liquid_doc.add_content(
             dataset.concepts.map do |_concept_name, concept|
               concept_bibliography(concept)
-            end.compact.sort.join("\n")
+            end.compact.sort.join("\n"),
           )
         end
 
@@ -196,7 +195,7 @@ module Metanorma
           concept = @datasets[dataset_name][concept_name]
 
           liquid_doc.add_content(
-            concept_bibliography(concept)
+            concept_bibliography(concept),
           )
         end
 
@@ -206,7 +205,7 @@ module Metanorma
 
             next if @rendered_bibliographies[ref]
 
-            @rendered_bibliographies[ref] = ref.gsub(/[ \/:]/, '_')
+            @rendered_bibliographies[ref] = ref.gsub(/[ \/:]/, "_")
             "* [[[#{@rendered_bibliographies[ref]},#{ref}]]]"
           end.compact.join("\n")
 

@@ -39,7 +39,8 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
           end
 
           it "should render correct output" do
-            expect(subject.process(document, reader).source).to eq(expected_output)
+            expect(subject.process(document, reader).source)
+              .to eq(expected_output)
           end
         end
 
@@ -77,7 +78,8 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
             end
 
             it "should render correct output" do
-              expect(subject.process(document, reader).source).to eq(expected_output)
+              expect(subject.process(document, reader).source)
+                .to eq(expected_output)
             end
           end
 
@@ -118,7 +120,8 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
             end
 
             it "should render correct output" do
-              expect(subject.process(document, reader).source).to eq(expected_output)
+              expect(subject.process(document, reader).source)
+                .to eq(expected_output)
             end
           end
 
@@ -178,7 +181,8 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
             end
 
             it "should render correct output" do
-              expect(subject.process(document, reader).source).to eq(expected_output)
+              expect(subject.process(document, reader).source)
+                .to eq(expected_output)
             end
           end
 
@@ -223,7 +227,8 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
             end
 
             it "should render correct output" do
-              expect(subject.process(document, reader).source).to eq(expected_output)
+              expect(subject.process(document, reader).source)
+                .to eq(expected_output)
             end
           end
 
@@ -260,7 +265,8 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
             end
 
             it "should render correct output" do
-              expect(subject.process(document, reader).source).to eq(expected_output)
+              expect(subject.process(document, reader).source)
+                .to eq(expected_output)
             end
           end
 
@@ -297,7 +303,8 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
             end
 
             it "should render correct output" do
-              expect(subject.process(document, reader).source).to eq(expected_output)
+              expect(subject.process(document, reader).source)
+                .to eq(expected_output)
             end
           end
         end
@@ -321,7 +328,8 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
         end
 
         it "should render correct output" do
-          expect(subject.process(document, reader).source.strip).to eq(expected_output)
+          expect(subject.process(document, reader).source.strip)
+            .to eq(expected_output)
         end
       end
 
@@ -360,7 +368,8 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
         end
 
         it "should render correct output" do
-          expect(subject.process(document, reader).source.strip).to eq(expected_output)
+          expect(subject.process(document, reader).source.strip)
+            .to eq(expected_output)
         end
       end
 
@@ -380,7 +389,8 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
         end
 
         it "should render correct output" do
-          expect(subject.process(document, reader).source.strip).to eq(expected_output)
+          expect(subject.process(document, reader).source.strip)
+            .to eq(expected_output)
         end
       end
 
@@ -401,7 +411,8 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
         end
 
         it "should render correct output" do
-          expect(subject.process(document, reader).source.strip).to eq(expected_output)
+          expect(subject.process(document, reader).source.strip)
+            .to eq(expected_output)
         end
       end
     end
@@ -423,7 +434,8 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
       end
 
       it "is expected to raise Glossarist::ParseError" do
-        expect { subject.process(document, reader) }.to raise_error(Glossarist::ParseError)
+        expect { subject.process(document, reader) }
+          .to raise_error(Glossarist::ParseError)
       end
     end
   end
