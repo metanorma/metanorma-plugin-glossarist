@@ -65,7 +65,7 @@ module Metanorma
         end
 
         def process(document, reader)
-          input_lines = reader.readlines.to_enum
+          input_lines = reader.lines.to_enum
 
           file_system = ::Liquid::LocalFileSystem.new(
             relative_file_path(document, ""),
@@ -74,7 +74,7 @@ module Metanorma
           @config[:file_system] = file_system
 
           processed_doc = prepare_document(document, input_lines)
-          Asciidoctor::Reader.new(
+          Asciidoctor::PreprocessorReader.new(document,
             processed_doc.to_s.split("\n"),
           )
         end
