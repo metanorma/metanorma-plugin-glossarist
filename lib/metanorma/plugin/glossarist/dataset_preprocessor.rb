@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "asciidoctor"
-require "pry"
 
 require "liquid"
 require "asciidoctor/reader"
