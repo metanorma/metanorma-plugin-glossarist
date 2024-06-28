@@ -61,6 +61,7 @@ module Metanorma
           @config = config
           @datasets = {}
           @rendered_bibliographies = {}
+          @seen_glossarist = []
         end
 
         def process(document, reader)
@@ -73,8 +74,17 @@ module Metanorma
           @config[:file_system] = file_system
 
           processed_doc = prepare_document(document, input_lines)
+          log(document, processed_doc.to_s) unless @seen_glossarist.empty?
           Asciidoctor::PreprocessorReader.new(document,
                                               processed_doc.to_s.split("\n"))
+        end
+
+        protected
+
+        def log(doc, text)
+          File.open("#{doc.attr('docfile')}.glossarist.log.txt", "w:UTF-8") do |f|
+            f.write(text)
+          end
         end
 
         private
@@ -114,6 +124,7 @@ module Metanorma
         end
 
         def process_dataset_tag(document, input_lines, liquid_doc, match)
+          @seen_glossarist << "x"
           context_names = prepare_dataset_contexts(document, match[1])
 
           dataset_section = <<~TEMPLATE
@@ -129,6 +140,7 @@ module Metanorma
         end
 
         def process_glossarist_block(document, liquid_doc, input_lines, match)
+          @seen_glossarist << "x"
           end_mark = input_lines.next
           path = relative_file_path(document, match[1])
 
@@ -160,6 +172,7 @@ module Metanorma
         end
 
         def process_render_tag(liquid_doc, match)
+          @seen_glossarist << "x"
           context_name, concept_name = match[1].split(",")
 
           liquid_doc.add_content(
@@ -168,6 +181,7 @@ module Metanorma
         end
 
         def process_import_tag(liquid_doc, match)
+          @seen_glossarist << "x"
           context_name = match[1].strip
           dataset = @datasets[context_name.strip]
 
@@ -179,6 +193,7 @@ module Metanorma
         end
 
         def process_bibliography(liquid_doc, match)
+          @seen_glossarist << "x"
           dataset_name = match[1].strip
           dataset = @datasets[dataset_name]
 
@@ -190,6 +205,7 @@ module Metanorma
         end
 
         def process_bibliography_entry(liquid_doc, match)
+          @seen_glossarist << "x"
           dataset_name, concept_name = match[1].split(",").map(&:strip)
           concept = @datasets[dataset_name][concept_name]
 

@@ -3,6 +3,43 @@
 RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
   let(:document) { Asciidoctor::Document.new }
 
+  it "log" do
+    input = <<~TEXT
+      = Document title
+      Author
+      :nodoc:
+      :novalid:
+      :no-isobib:
+      :imagesdir: spec/assets
+
+      == Section 1
+      [glossarist,./spec/fixtures/dataset-glossarist-v2,concepts]
+      ----
+      === {{ concepts['entity'].term }}
+      ----
+    TEXT
+    FileUtils.rm_rf("test.adoc.glossarist.log.txt")
+    metanorma_process(input)
+    expect(File.exist?("test.adoc.glossarist.log.txt")).to be true
+
+    input = <<~TEXT
+      = Document title
+      Author
+      :nodoc:
+      :novalid:
+      :no-isobib:
+      :imagesdir: spec/assets
+
+      == Section 1
+      ----
+      === {{ concepts['entity'].term }}
+      ----
+    TEXT
+    FileUtils.rm_rf("test.adoc.glossarist.log.txt")
+    metanorma_process(input)
+    expect(File.exist?("test.adoc.glossarist.log.txt")).to be false
+  end
+
   describe "#process" do
     context "Valid concepts" do
       context "[glossarist block]" do
