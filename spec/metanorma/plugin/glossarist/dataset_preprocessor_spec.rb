@@ -447,6 +447,9 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
 
 
 
+
+
+
               [.source]
               <<ISO_TS_14812_2022,3.1.1.1>>
             OUTPUT
@@ -501,7 +504,6 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
             Asciidoctor::Reader.new <<~TEMPLATE
               :glossarist-dataset: dataset1:./spec/fixtures/dataset-glossarist-v2
 
-              === Render Section
               glossarist::import[dataset1]
             TEMPLATE
           end
@@ -577,16 +579,6 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
             expect(subject.process(document, reader).source.strip)
               .to eq(expected_output)
           end
-        end
-      end
-
-      context "[render bibliography entry]" do
-        let(:reader) do
-          Asciidoctor::Reader.new <<~TEMPLATE
-            :glossarist-dataset: dataset1:./spec/fixtures/dataset-glossarist-v2
-
-            glossarist::render_bibliography_entry[dataset1, entity]
-          TEMPLATE
         end
 
         let(:expected_output) do
