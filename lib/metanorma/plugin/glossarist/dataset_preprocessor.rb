@@ -121,9 +121,7 @@ module Metanorma
             process_glossarist_block(document, liquid_doc, input_lines, match)
           else
             if /^==+ \S/.match?(current_line)
-              @title_depth[:value] =
-                current_line.sub(/ .*$/,
-                                 "").size
+              @title_depth[:value] = current_line.sub(/ .*$/, "").size
             end
             liquid_doc.add_content(current_line)
           end
