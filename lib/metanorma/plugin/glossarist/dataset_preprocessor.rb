@@ -162,20 +162,28 @@ module Metanorma
         end
 
         def process_render_tag(liquid_doc, match)
-          context_name, concept_name = match[1].split(",")
+          matches = match[1].split(",").map(&:strip)
+
+          context_name = matches[0]
+          concept_name = matches[1]
+          render_options = matches[2..-1]
 
           liquid_doc.add_content(
-            concept_template(context_name.strip, concept_name.strip),
+            concept_template(context_name.strip, concept_name.strip, render_options),
           )
         end
 
         def process_import_tag(liquid_doc, match)
-          context_name = match[1].strip
+          matches = match[1].split(",").map(&:strip)
+
+          context_name = matches[0]
+          render_options = matches[1..-1]
+
           dataset = @datasets[context_name.strip]
 
           liquid_doc.add_content(
             dataset.concepts.map do |concept_name, _concept|
-              concept_template(context_name, concept_name)
+              concept_template(context_name, concept_name, render_options)
             end.join("\n"),
           )
         end
@@ -237,8 +245,11 @@ module Metanorma
             .system_path(file_path, docfile_directory)
         end
 
-        def concept_template(dataset_name, concept_name)
+        def concept_template(dataset_name, concept_name, options = [])
+          options = options_to_hash(options)
+
           <<~CONCEPT_TEMPLATE
+            [[#{identifier(dataset_name, concept_name, options)}]]
             #{"=" * (@title_depth[:value] + 1)} {{ #{dataset_name}['#{concept_name}'].term }}
             #{alt_terms(dataset_name, concept_name)}
 
@@ -250,6 +261,18 @@ module Metanorma
 
             #{sources(dataset_name, concept_name)}
           CONCEPT_TEMPLATE
+        end
+
+        def identifier(dataset_name, concept_name, options = {})
+          prefix = "#{options["anchor-prefix"]}" if options["anchor-prefix"]
+
+          "#{prefix}#{@datasets[dataset_name][concept_name]["identifier"]}"
+        end
+
+        def options_to_hash(options_arr)
+          return {} if !options_arr || options_arr.empty?
+
+          options_arr.map { |option| option.split("=") }.to_h
         end
 
         def alt_terms(dataset_name, concept_name)

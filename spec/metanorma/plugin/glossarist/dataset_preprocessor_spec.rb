@@ -333,6 +333,110 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
         end
       end
 
+      context "[render dataset]" do
+        let(:reader) do
+          Asciidoctor::Reader.new <<~TEMPLATE
+            :glossarist-dataset: dataset1:./spec/fixtures/dataset-glossarist-v2
+
+            === Terms and Definitions
+            glossarist::import[dataset1,anchor-prefix=urn:iso:std:iso:14812:]
+          TEMPLATE
+        end
+
+        let(:expected_output) do
+          <<~OUTPUT.strip
+            === Terms and Definitions
+            [[urn:iso:std:iso:14812:3.1.1.5]]
+            ==== biological entity
+
+
+            {{material entity}} that was or is a living organism
+
+
+
+
+
+
+
+
+            [.source]
+            <<ISO_TS_14812_2023,3.1.1.5>>
+
+
+
+
+            [[urn:iso:std:iso:14812:3.1.1.1]]
+            ==== entity
+            admitted:[E]
+
+            concrete or abstract thing that exists, did exist, or can possibly exist, including associations among these things
+
+
+            [example]
+            {{person,Person}}, object, event, idea, process, etc.
+
+
+
+
+
+
+
+
+            [.source]
+            <<ISO_TS_14812_2022,3.1.1.1>>
+
+
+
+
+            [[urn:iso:std:iso:14812:3.1.1.3]]
+            ==== material entity
+
+
+            {{entity}} that occupies three-dimensional space
+
+
+
+
+
+            [NOTE]
+            ====
+            All material entities have certain characteristics that can be described and therefore this concept is important for ontology purposes.
+            ====
+
+
+
+
+
+            [.source]
+            <<ISO_TS_14812_2022,3.1.1.3>>
+
+
+
+
+            [[urn:iso:std:iso:14812:3.1.1.6]]
+            ==== person
+
+
+            {{biological entity}} that is a human being
+
+
+
+
+
+
+
+
+            [.source]
+            <<ISO_TS_14812_2022,3.1.1.6>>
+          OUTPUT
+        end
+
+        it "should render correct output" do
+          expect(subject.process(document, reader).source.strip)
+            .to eq(expected_output)
+        end
+      end
+
       context "[render concept]" do
         context "with 3 level title depth" do
           let(:reader) do
@@ -347,6 +451,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
           let(:expected_output) do
             <<~OUTPUT.strip
               === Render Section
+              [[3.1.1.1]]
               ==== entity
               admitted:[E]
 
@@ -387,6 +492,48 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
           let(:expected_output) do
             <<~OUTPUT.strip
               == Render Section
+              [[3.1.1.1]]
+              === entity
+              admitted:[E]
+
+              concrete or abstract thing that exists, did exist, or can possibly exist, including associations among these things
+
+
+              [example]
+              {{person,Person}}, object, event, idea, process, etc.
+
+
+
+
+
+
+
+
+              [.source]
+              <<ISO_TS_14812_2022,3.1.1.1>>
+            OUTPUT
+          end
+
+          it "should render correct output" do
+            expect(subject.process(document, reader).source.strip)
+              .to eq(expected_output)
+          end
+        end
+
+        context "with anchor-prefix" do
+          let(:reader) do
+            Asciidoctor::Reader.new <<~TEMPLATE
+              :glossarist-dataset: dataset1:./spec/fixtures/dataset-glossarist-v2
+
+              == Render Section
+              glossarist::render[dataset1, entity, anchor-prefix=identifier-]
+            TEMPLATE
+          end
+
+          let(:expected_output) do
+            <<~OUTPUT.strip
+              == Render Section
+              [[identifier-3.1.1.1]]
               === entity
               admitted:[E]
 
