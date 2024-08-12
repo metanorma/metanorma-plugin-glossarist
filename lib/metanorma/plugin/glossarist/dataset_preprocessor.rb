@@ -60,7 +60,7 @@ module Metanorma
           super
           @config = config
           @datasets = {}
-          @title_depth = 2
+          @title_depth = { value: 2 }
           @rendered_bibliographies = {}
         end
 
@@ -110,7 +110,7 @@ module Metanorma
           elsif match = current_line.match(GLOSSARIST_BLOCK_REGEX)
             process_glossarist_block(document, liquid_doc, input_lines, match)
           else
-            @title_depth = current_line.sub(/ .*$/, "").size if /^==+ \S/.match?(current_line)
+            @title_depth[:value] = current_line.sub(/ .*$/, "").size if /^==+ \S/.match?(current_line)
             liquid_doc.add_content(current_line)
           end
         end
@@ -239,7 +239,7 @@ module Metanorma
 
         def concept_template(dataset_name, concept_name)
           <<~CONCEPT_TEMPLATE
-            #{"=" * (@title_depth + 1)} {{ #{dataset_name}['#{concept_name}'].term }}
+            #{"=" * (@title_depth[:value] + 1)} {{ #{dataset_name}['#{concept_name}'].term }}
             #{alt_terms(dataset_name, concept_name)}
 
             {{ #{dataset_name}['#{concept_name}']['eng'].definition[0].content }}
