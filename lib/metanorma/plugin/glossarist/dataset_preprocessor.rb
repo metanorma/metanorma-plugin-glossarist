@@ -193,23 +193,29 @@ module Metanorma
 
         def process_render_tag(liquid_doc, match)
           @seen_glossarist << "x"
-          context_name, concept_name = match[1].split(",")
+          matches = match[1].split(",").map(&:strip)
+
+          context_name = matches[0]
+          concept_name = matches[1]
+          render_options = matches[2..-1]
 
           liquid_doc.add_content(
-            concept_template(context_name.strip, concept_name.strip),
+            concept_template(context_name.strip, concept_name.strip, render_options),
           )
         end
 
         def process_import_tag(liquid_doc, match) # rubocop:disable Metrics/AbcSize
           @seen_glossarist << "x"
-          context_name = match[1].strip
-          dataset = @datasets[context_name]
+          matches = match[1].split(",").map(&:strip)
+          context_name = matches[0]
+          render_options = matches[1..-1]
+          dataset = @datasets[context_name.strip]
 
           liquid_doc.add_content(
             dataset.map do |concept|
               concept_name = concept.data.localizations["eng"].data
                 .terms[0].designation
-              concept_template(context_name, concept_name)
+              concept_template(context_name, concept_name, render_options)
             end.join("\n"),
           )
         end
@@ -273,9 +279,13 @@ module Metanorma
             .system_path(file_path, docfile_directory)
         end
 
-        def concept_template(dataset_name, concept_name)
+        def concept_template(dataset_name, concept_name, options = [])
+          options = options_to_hash(options)
+
           <<~CONCEPT_TEMPLATE
+            [[#{identifier(dataset_name, concept_name, options)}]]
             #{'=' * (@title_depth[:value] + 1)} #{concept_title(dataset_name, concept_name)}
+
             #{alt_terms(dataset_name, concept_name)}
 
             #{concept_definition(dataset_name, concept_name)}
@@ -294,6 +304,17 @@ module Metanorma
               .data.terms[0]
               .designation == concept_name
           end
+        end
+        def identifier(dataset_name, concept_name, options = {})
+          prefix = "#{options["anchor-prefix"]}" if options["anchor-prefix"]
+          concept = get_concept(dataset_name, concept_name)
+          "#{prefix}#{concept.data.id}"
+        end
+
+        def options_to_hash(options_arr)
+          return {} if !options_arr || options_arr.empty?
+
+          options_arr.map { |option| option.split("=") }.to_h
         end
 
         def concept_title(dataset_name, concept_name)
