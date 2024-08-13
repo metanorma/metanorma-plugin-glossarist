@@ -11,7 +11,7 @@ module Liquid
         @concepts_map = {}
 
         filtered_concepts(@concepts_collection, filters).each do |concept|
-          @concepts_map[concept["term"]] = concept
+          @concepts_map[concept["term"]] = sanitize_concept(concept)
         end
       end
       # rubocop:enable Lint/MissingSuper
@@ -29,6 +29,33 @@ module Liquid
       end
 
       private
+
+      def sanitize_concept(concept)
+        concept["localized_concepts"].each do |lang, _localized_concept_uuid|
+          localized_concept = concept[lang]
+          next unless localized_concept
+
+          localized_concept["definition"] = localized_concept["definition"].map do |definition|
+            { "content" => sanitize_references(definition["content"]) }
+          end
+
+          localized_concept["examples"] = localized_concept["examples"].map do |example|
+            { "content" => sanitize_references(example["content"]) }
+          end
+
+          localized_concept["notes"] = localized_concept["notes"].map do |note|
+            { "content" => sanitize_references(note["content"]) }
+          end
+        end
+
+        concept
+      end
+
+      def sanitize_references(str)
+        str.gsub(/\{\{([^,]*),([^\}]*)\}\}/) do |match|
+          "{{#{Metanorma::Utils.to_ncname(Regexp.last_match[1])},#{Regexp.last_match[2]}}}"
+        end
+      end
 
       def filtered_concepts(concepts_collection, filters)
         concept_filters = filters.dup

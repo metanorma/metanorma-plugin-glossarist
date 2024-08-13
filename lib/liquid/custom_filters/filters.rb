@@ -5,6 +5,12 @@ module Liquid
         list.values
       end
 
+      def sanitize_references(str)
+        str.gsub(/\{\{([^,]*),([^\}]*)\}\}/) do |match|
+          "{{#{Metanorma::Utils.to_ncname(Regexp.last_match[1])},#{Regexp.last_match[2]}}}"
+        end
+      end
+
       def terminological_data(term)
         result = []
 
