@@ -212,7 +212,7 @@ module Metanorma
           bibliography = concept["eng"]["sources"].map do |source|
             ref = source["origin"]["ref"]
 
-            next if @rendered_bibliographies[ref]
+            next if @rendered_bibliographies[ref] || ref.nil? || ref.empty?
 
             @rendered_bibliographies[ref] = ref.gsub(/[ \/:]/, "_")
             "* [[[#{@rendered_bibliographies[ref]},#{ref}]]]"
@@ -314,6 +314,7 @@ module Metanorma
         def sources(dataset_name, concept_name)
           <<~SOURCES
             {% for source in #{dataset_name}['#{concept_name}']['eng'].sources %}
+            {%- if source.origin.ref == nil or source.origin.ref == '' %}{% continue %}{% endif %}
             [.source]
             <<{{ source.origin.ref | replace: ' ', '_' | replace: '/', '_' | replace: ':', '_' }},{{ source.origin.clause }}>>
 
