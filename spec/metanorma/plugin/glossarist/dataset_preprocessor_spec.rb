@@ -168,7 +168,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
 
                 ==== material entity
 
-                {{entity}} that occupies three-dimensional space
+                {{urn_iso_std_iso_14812_3.1.1.1,entity}} that occupies three-dimensional space
 
                 ==== person
 
@@ -218,7 +218,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
 
                 ==== material entity
 
-                {{entity}} that occupies three-dimensional space
+                {{urn_iso_std_iso_14812_3.1.1.1,entity}} that occupies three-dimensional space
 
 
 
@@ -373,7 +373,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
 
 
             [example]
-            {{person,Person}}, object, event, idea, process, etc.
+            {{urn_iso_std_iso_14812_3.1.1.6,person,Person}}, object, event, idea, process, etc.
 
 
 
@@ -392,7 +392,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
             ==== material entity
 
 
-            {{entity}} that occupies three-dimensional space
+            {{urn_iso_std_iso_14812_3.1.1.1,entity}} that occupies three-dimensional space
 
 
 
@@ -459,7 +459,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
 
 
               [example]
-              {{person,Person}}, object, event, idea, process, etc.
+              {{urn_iso_std_iso_14812_3.1.1.6,person,Person}}, object, event, idea, process, etc.
 
 
 
@@ -500,7 +500,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
 
 
               [example]
-              {{person,Person}}, object, event, idea, process, etc.
+              {{urn_iso_std_iso_14812_3.1.1.6,person,Person}}, object, event, idea, process, etc.
 
 
 
@@ -541,7 +541,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
 
 
               [example]
-              {{person,Person}}, object, event, idea, process, etc.
+              {{urn_iso_std_iso_14812_3.1.1.6,person,Person}}, object, event, idea, process, etc.
 
 
 
