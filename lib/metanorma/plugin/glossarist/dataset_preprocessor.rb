@@ -266,7 +266,7 @@ module Metanorma
         def identifier(dataset_name, concept_name, options = {})
           prefix = "#{options["anchor-prefix"]}" if options["anchor-prefix"]
 
-          "#{prefix}#{@datasets[dataset_name][concept_name]["identifier"]}"
+          Metanorma::Utils.to_ncname("#{prefix}#{@datasets[dataset_name][concept_name]["identifier"]}")
         end
 
         def options_to_hash(options_arr)
