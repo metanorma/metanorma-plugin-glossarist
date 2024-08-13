@@ -334,26 +334,67 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
       end
 
       context "[render concept]" do
-        let(:reader) do
-          Asciidoctor::Reader.new <<~TEMPLATE
-            :glossarist-dataset: dataset1:./spec/fixtures/dataset-glossarist-v2
+        context "with 3 level title depth" do
+          let(:reader) do
+            Asciidoctor::Reader.new <<~TEMPLATE
+              :glossarist-dataset: dataset1:./spec/fixtures/dataset-glossarist-v2
 
-            === Render Section
-            glossarist::render[dataset1, entity]
-          TEMPLATE
+              === Render Section
+              glossarist::render[dataset1, entity]
+            TEMPLATE
+          end
+
+          let(:expected_output) do
+            <<~OUTPUT.strip
+              === Render Section
+              ==== entity
+              admitted:[E]
+
+              concrete or abstract thing that exists, did exist, or can possibly exist, including associations among these things
+
+
+              [example]
+              {{person,Person}}, object, event, idea, process, etc.
+
+
+
+
+
+
+
+
+              [.source]
+              <<ISO_TS_14812_2022,3.1.1.1>>
+            OUTPUT
+          end
+
+          it "should render correct output" do
+            expect(subject.process(document, reader).source.strip)
+              .to eq(expected_output)
+          end
         end
 
-        let(:expected_output) do
-          <<~OUTPUT.strip
-            === Render Section
-            ==== entity
-            admitted:[E]
+        context "with 2 level title depth" do
+          let(:reader) do
+            Asciidoctor::Reader.new <<~TEMPLATE
+              :glossarist-dataset: dataset1:./spec/fixtures/dataset-glossarist-v2
 
-            concrete or abstract thing that exists, did exist, or can possibly exist, including associations among these things
+              == Render Section
+              glossarist::render[dataset1, entity]
+            TEMPLATE
+          end
+
+          let(:expected_output) do
+            <<~OUTPUT.strip
+              == Render Section
+              === entity
+              admitted:[E]
+
+              concrete or abstract thing that exists, did exist, or can possibly exist, including associations among these things
 
 
-            [example]
-            {{person,Person}}, object, event, idea, process, etc.
+              [example]
+              {{person,Person}}, object, event, idea, process, etc.
 
 
 
@@ -362,14 +403,15 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
 
 
 
-            [.source]
-            <<ISO_TS_14812_2022,3.1.1.1>>
-          OUTPUT
-        end
+              [.source]
+              <<ISO_TS_14812_2022,3.1.1.1>>
+            OUTPUT
+          end
 
-        it "should render correct output" do
-          expect(subject.process(document, reader).source.strip)
-            .to eq(expected_output)
+          it "should render correct output" do
+            expect(subject.process(document, reader).source.strip)
+              .to eq(expected_output)
+          end
         end
       end
 
