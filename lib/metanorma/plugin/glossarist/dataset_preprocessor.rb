@@ -308,7 +308,12 @@ module Metanorma
         def identifier(dataset_name, concept_name, options = {})
           prefix = "#{options["anchor-prefix"]}" if options["anchor-prefix"]
           concept = get_concept(dataset_name, concept_name)
-          "#{prefix}#{concept.data.id}"
+
+          id  = "#{prefix}#{concept.data.id}"
+          # id starts with digits 0-9
+          return id if id.start_with?(/[0-9]/) 
+
+          Metanorma::Utils.to_ncname(id.gsub(":", "_"))
         end
 
         def options_to_hash(options_arr)

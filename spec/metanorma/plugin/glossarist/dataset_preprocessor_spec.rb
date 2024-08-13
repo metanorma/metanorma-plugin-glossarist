@@ -434,7 +434,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
         let(:expected_output) do
           <<~OUTPUT.strip
             === Terms and Definitions
-            [[urn:iso:std:iso:14812:3.1.1.5]]
+            [[urn_iso_std_iso_14812_3.1.1.5]]
             ==== biological entity
 
 
@@ -450,7 +450,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
 
 
 
-            [[urn:iso:std:iso:14812:3.1.1.1]]
+            [[urn_iso_std_iso_14812_3.1.1.1]]
             ==== entity
 
             admitted:[E]
@@ -469,7 +469,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
 
 
 
-            [[urn:iso:std:iso:14812:3.1.1.3]]
+            [[urn_iso_std_iso_14812_3.1.1.3]]
             ==== material entity
 
 
@@ -490,7 +490,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
 
 
 
-            [[urn:iso:std:iso:14812:3.1.1.6]]
+            [[urn_iso_std_iso_14812_3.1.1.6]]
             ==== person
 
 
