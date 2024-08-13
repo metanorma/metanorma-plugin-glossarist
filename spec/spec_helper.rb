@@ -18,3 +18,13 @@ RSpec.configure do |config|
     c.syntax = :expect
   end
 end
+
+require "metanorma-standoc"
+
+def metanorma_process(input)
+  Asciidoctor.convert(input, backend: :standoc, header_footer: true,
+                             agree_to_terms: true, to_file: false, safe: :safe,
+                             attributes: ["nodoc", "stem", "xrefstyle=short",
+                                          "docfile=test.adoc",
+                                          "output_dir="])
+end
