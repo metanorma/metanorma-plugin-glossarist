@@ -138,6 +138,194 @@ The term bar is used as metasyntactic variables and placeholder names in compute
 The term foo is used as metasyntactic variables and placeholder names in computer programming
 ```
 
+The full concept model (a concept can have multiple localized concepts) is available through the block as follows:
+
+```ruby
+{
+  # UUIDs for localized concept mappings
+  "localized_concepts" => {
+    "eng" => "<uuid>",  # English concept UUID
+    "fre" => "<uuid>"   # French concept UUID
+  },
+
+  # Main concept term
+  "term" => "<string>",
+  
+  # Language-specific content (structure repeated for each language code)
+  "<language_code>" => {
+    "dates" => [],      # Array of relevant dates
+    "definition" => [   # Array of definition objects
+      {
+        "content" => "<string>"  # Definition text
+      }
+    ],
+    "examples" => [],   # Array of example objects
+    "id" => "<string>", # Concept ID
+    
+    "notes" => [        # Array of note objects
+      {
+        "content" => "<string>"  # Note text
+      }
+    ],
+    
+    "sources" => [      # Array of source objects
+      {
+        "origin" => {
+          "ref" => "<string>"    # Reference citation
+        },
+        "type" => "<string>",    # Source type (e.g. "lineage")
+        "status" => "<string>"   # Status (e.g. "identical")
+      }
+    ],
+    
+    "terms" => [        # Array of term objects
+      {
+        "type" => "<string>",              # Term type (e.g. "expression")
+        "normative_status" => "<string>",  # Status (e.g. "preferred")
+        "designation" => "<string>",       # Term text
+        "grammar_info" => [                # Array of grammar objects
+          {
+            "preposition" => boolean,
+            "participle" => boolean,
+            "adj" => boolean,
+            "verb" => boolean,
+            "adverb" => boolean,
+            "noun" => boolean,
+            "gender" => ["<string>"],      # Array of grammatical genders
+            "number" => ["<string>"]       # Array of grammatical numbers
+          }
+        ]
+      }
+    ],
+    
+    "language_code" => "<string>"  # ISO language code
+  }
+}
+```
+
+The language codes used are ISO 639-* 3-character codes, as described in the
+[Glossarist Concept model](https://github.com/glossarist/concept-model).
+
+An example of the full model (from ISO/IEC 2382:2015):
+
+```ruby
+{
+  "localized_concepts" => {
+    "eng" => "01134f51-b88c-5214-8909-5d271ea619cf",
+    "fre" => "f290a3af-f1b3-527a-9045-a2dfcc0caf5a"
+  },
+  "term" => "concept description",
+  "eng" => {
+    "dates" => [],
+    "definition" => [
+      {
+        "content" => "data structure describing the class of all known instances of a concept"
+      }
+    ],
+    "examples" => [],
+    "id" => "2122978",
+    "notes" => [
+      {
+        "content" => "concept description: term and definition standardized by ISO/IEC [ISO/IEC 2382-31:1997]."
+      },
+      {
+        "content" => "31.02.02 (2382)"
+      }
+    ],
+    "sources" => [
+      {
+        "origin" => {
+          "ref" => "ISO/IEC 2382-31:1997"
+        },
+        "type" => "lineage",
+        "status" => "identical"
+      },
+      {
+        "origin" => {
+          "ref" => "Ranger, Natalie * 2006 * Bureau de la traduction / Translation Bureau * Services linguistiques / Linguistic Services * Bur. dir. Centre de traduction et de terminologie / Dir's Office Translation and Terminology Centre * Div. Citoyenneté et Protection civile / Citizen. & Emergency preparedness Div. * Normalisation terminologique / Terminology Standardization"
+        },
+        "type" => "lineage",
+        "status" => "identical"
+      }
+    ],
+    "terms" => [
+      {
+        "type" => "expression",
+        "normative_status" => "preferred",
+        "designation" => "concept description",
+        "grammar_info" => [
+          {
+            "preposition" => false,
+            "participle" => false,
+            "adj" => false,
+            "verb" => false,
+            "adverb" => false,
+            "noun" => false,
+            "gender" => [],
+            "number" => ["singular"]
+          }
+        ]
+      }
+    ],
+    "language_code" => "eng"
+  },
+  "fre" => {
+    "dates" => [],
+    "definition" => [
+      {
+        "content" => "structure de données qui décrit la classe des instances connues d'un concept"
+      }
+    ],
+    "examples" => [],
+    "id" => "2122978",
+    "notes" => [
+      {
+        "content" => "description de concept : terme et définition normalisés par l'ISO/CEI [ISO/IEC 2382-31:1997]."
+      },
+      {
+        "content" => "31.02.02 (2382)"
+      }
+    ],
+    "sources" => [
+      {
+        "origin" => {
+          "ref" => "ISO/IEC 2382-31:1997"
+        },
+        "type" => "lineage",
+        "status" => "identical"
+      },
+      {
+        "origin" => {
+          "ref" => "Ranger, Natalie * 2006 * Bureau de la traduction / Translation Bureau * Services linguistiques / Linguistic Services * Bur. dir. Centre de traduction et de terminologie / Dir's Office Translation and Terminology Centre * Div. Citoyenneté et Protection civile / Citizen. & Emergency preparedness Div. * Normalisation terminologique / Terminology Standardization"
+        },
+        "type" => "lineage",
+        "status" => "identical"
+      }
+    ],
+    "terms" => [
+      {
+        "type" => "expression",
+        "normative_status" => "preferred",
+        "designation" => "description de concept",
+        "grammar_info" => [
+          {
+            "preposition" => false,
+            "participle" => false,
+            "adj" => false,
+            "verb" => false,
+            "adverb" => false,
+            "noun" => false,
+            "gender" => ["f"],
+            "number" => ["singular"]
+          }
+        ]
+      }
+    ],
+    "language_code" => "fre"
+  }
+}
+```
+
 ### Rendering a single term from loaded dataset
 
 This can be used to render a single concept from the loaded dataset. See [Loading Dataset](#loading-dataset) to load a dataset.
