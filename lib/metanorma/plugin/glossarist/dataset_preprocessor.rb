@@ -200,7 +200,7 @@ module Metanorma
           dataset = @datasets[dataset_name]
 
           liquid_doc.add_content(
-            dataset.concepts.map do |_concept_name, concept|
+            dataset.concepts.map do |concept|
               concept_bibliography(concept)
             end.compact.sort.join("\n"),
           )
