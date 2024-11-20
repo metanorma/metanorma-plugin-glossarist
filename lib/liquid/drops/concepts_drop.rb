@@ -8,24 +8,20 @@ module Liquid
       # rubocop:disable Lint/MissingSuper
       def initialize(managed_concept_collection, filters = {})
         @concepts_collection = managed_concept_collection
-        @concepts_map = {}
-
-        filtered_concepts(@concepts_collection, filters).each do |concept|
-          @concepts_map[concept["term"]] = concept
-        end
+        @concepts = filtered_concepts(@concepts_collection, filters)
       end
       # rubocop:enable Lint/MissingSuper
 
       def concepts
-        @concepts_map
+        @concepts
       end
 
       def [](concept_name)
-        @concepts_map[concept_name]
+        @concepts.find { |c| c["term"] == concept_name }
       end
 
       def each(&block)
-        @concepts_map.values.each(&block)
+        @concepts.each(&block)
       end
 
       private
