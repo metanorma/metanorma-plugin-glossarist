@@ -11,10 +11,9 @@ require "liquid/custom_blocks/with_glossarist_context"
 require "liquid/drops/concepts_drop"
 require "liquid/custom_filters/filters"
 
-Liquid::Template
-  .register_tag("with_glossarist_context",
-                Liquid::CustomBlocks::WithGlossaristContext)
-Liquid::Template.register_filter(Liquid::CustomFilters::Filters)
+Liquid::Environment.default.register_tag("with_glossarist_context",
+  Liquid::CustomBlocks::WithGlossaristContext)
+Liquid::Environment.default.register_filter(Liquid::CustomFilters::Filters)
 
 module Metanorma
   module Plugin
