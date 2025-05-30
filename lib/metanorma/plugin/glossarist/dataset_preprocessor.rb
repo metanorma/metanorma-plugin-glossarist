@@ -6,15 +6,6 @@ require "liquid"
 require "asciidoctor/reader"
 require "glossarist"
 require "metanorma/plugin/glossarist/document"
-require "liquid/custom_blocks/with_glossarist_context"
-
-require "liquid/drops/concepts_drop"
-require "liquid/custom_filters/filters"
-
-Liquid::Template
-  .register_tag("with_glossarist_context",
-                Liquid::CustomBlocks::WithGlossaristContext)
-Liquid::Template.register_filter(Liquid::CustomFilters::Filters)
 
 module Metanorma
   module Plugin
@@ -23,12 +14,10 @@ module Metanorma
         GLOSSARIST_DATASET_REGEX = /^:glossarist-dataset:\s*(.*?)$/m.freeze
         GLOSSARIST_IMPORT_REGEX = /^glossarist::import\[(.*?)\]$/m.freeze
         GLOSSARIST_RENDER_REGEX = /^glossarist::render\[(.*?)\]$/m.freeze
-
-        GLOSSARIST_BLOCK_REGEX = /^\[glossarist,(.+?),(.+?)\]/
-        GLOSSARIST_FILTER_BLOCK_REGEX = /^\[glossarist,(.+?),(filter=.+?),(.+?)\]/
-
-        GLOSSARIST_BIBLIOGRAPHY_REGEX = /^glossarist::render_bibliography\[(.*?)\]$/m.freeze
-        GLOSSARIST_BIBLIOGRAPHY_ENTRY_REGEX = /^glossarist::render_bibliography_entry\[(.*?)\]$/m.freeze
+        GLOSSARIST_BLOCK_REGEX = /^\[glossarist,(.+?),(.+?)\]/.freeze
+        GLOSSARIST_FILTER_BLOCK_REGEX = /^\[glossarist,(.+?),(filter=.+?),(.+?)\]/.freeze # rubocop:disable Layout/LineLength
+        GLOSSARIST_BIBLIOGRAPHY_REGEX = /^glossarist::render_bibliography\[(.*?)\]$/m.freeze # rubocop:disable Layout/LineLength
+        GLOSSARIST_BIBLIOGRAPHY_ENTRY_REGEX = /^glossarist::render_bibliography_entry\[(.*?)\]$/m.freeze # rubocop:disable Layout/LineLength
 
         # Search document for the following blocks
         #   - :glossarist-dataset: dataset1:./dataset1;dataset2:./dataset2
@@ -83,7 +72,8 @@ module Metanorma
         protected
 
         def log(doc, text)
-          File.open("#{doc.attr('docfile')}.glossarist.log.txt", "w:UTF-8") do |f|
+          File.open("#{doc.attr('docfile')}.glossarist.log.txt",
+                    "w:UTF-8") do |f|
             f.write(text)
           end
         end
@@ -104,7 +94,7 @@ module Metanorma
           liquid_doc
         end
 
-        def process_line(document, input_lines, current_line, liquid_doc)
+        def process_line(document, input_lines, current_line, liquid_doc) # rubocop:disable Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/MethodLength,Metrics/PerceivedComplexity
           if match = current_line.match(GLOSSARIST_DATASET_REGEX)
             process_dataset_tag(document, input_lines, liquid_doc, match)
           elsif match = current_line.match(GLOSSARIST_RENDER_REGEX)
@@ -117,10 +107,14 @@ module Metanorma
             process_bibliography_entry(liquid_doc, match)
           elsif match = current_line.match(GLOSSARIST_FILTER_BLOCK_REGEX)
             process_glossarist_block(document, liquid_doc, input_lines, match)
-          elsif match = current_line.match(GLOSSARIST_BLOCK_REGEX)
+          elsif match = current_line.match(GLOSSARIST_BLOCK_REGEX) # rubocop:disable Lint/DuplicateBranch
             process_glossarist_block(document, liquid_doc, input_lines, match)
           else
-            @title_depth[:value] = current_line.sub(/ .*$/, "").size if /^==+ \S/.match?(current_line)
+            if /^==+ \S/.match?(current_line)
+              @title_depth[:value] =
+                current_line.sub(/ .*$/,
+                                 "").size
+            end
             liquid_doc.add_content(current_line)
           end
         end
@@ -144,7 +138,7 @@ module Metanorma
         def process_glossarist_block(document, liquid_doc, input_lines, match)
           @seen_glossarist << "x"
           end_mark = input_lines.next
-          path = relative_file_path(document, match[1])
+          # path = relative_file_path(document, match[1])
 
           glossarist_params = prepare_glossarist_block_params(document, match)
 
@@ -182,13 +176,15 @@ module Metanorma
           )
         end
 
-        def process_import_tag(liquid_doc, match)
+        def process_import_tag(liquid_doc, match) # rubocop:disable Metrics/AbcSize
           @seen_glossarist << "x"
           context_name = match[1].strip
-          dataset = @datasets[context_name.strip]
+          dataset = @datasets[context_name]
 
           liquid_doc.add_content(
-            dataset.concepts.map do |concept_name, _concept|
+            dataset.map do |concept|
+              concept_name = concept.data.localizations["eng"].data
+                .terms[0].designation
               concept_template(context_name, concept_name)
             end.join("\n"),
           )
@@ -200,7 +196,7 @@ module Metanorma
           dataset = @datasets[dataset_name]
 
           liquid_doc.add_content(
-            dataset.concepts.map do |concept|
+            dataset.map do |concept|
               concept_bibliography(concept)
             end.compact.sort.join("\n"),
           )
@@ -209,17 +205,18 @@ module Metanorma
         def process_bibliography_entry(liquid_doc, match)
           @seen_glossarist << "x"
           dataset_name, concept_name = match[1].split(",").map(&:strip)
-          concept = @datasets[dataset_name][concept_name]
+          concept = get_concept(dataset_name, concept_name)
 
           liquid_doc.add_content(
             concept_bibliography(concept),
           )
         end
 
-        def concept_bibliography(concept)
-          bibliography = concept["eng"]["sources"].map do |source|
-            ref = source["origin"]["ref"]
+        def concept_bibliography(concept) # rubocop:disable Metrics/AbcSize
+          sources = concept.data.localizations["eng"].data.sources
 
+          bibliography = sources.map do |source|
+            ref = source.origin.text
             next if @rendered_bibliographies[ref] || ref.nil? || ref.empty?
 
             @rendered_bibliographies[ref] = ref.gsub(/[ \/:]/, "_")
@@ -236,7 +233,7 @@ module Metanorma
 
             dataset = ::Glossarist::ManagedConceptCollection.new
             dataset.load_from_files(path)
-            @datasets[context_name] = Liquid::Drops::ConceptsDrop.new(dataset)
+            @datasets[context_name] = dataset.map(&:to_liquid)
 
             "#{context_name}=#{path}"
           end
@@ -255,10 +252,10 @@ module Metanorma
 
         def concept_template(dataset_name, concept_name)
           <<~CONCEPT_TEMPLATE
-            #{"=" * (@title_depth[:value] + 1)} {{ #{dataset_name}['#{concept_name}'].term }}
+            #{'=' * (@title_depth[:value] + 1)} #{concept_title(dataset_name, concept_name)}
             #{alt_terms(dataset_name, concept_name)}
 
-            {{ #{dataset_name}['#{concept_name}']['eng'].definition[0].content }}
+            #{concept_definition(dataset_name, concept_name)}
 
             #{examples(dataset_name, concept_name)}
 
@@ -268,51 +265,99 @@ module Metanorma
           CONCEPT_TEMPLATE
         end
 
-        def alt_terms(dataset_name, concept_name)
-          concept = @datasets[dataset_name][concept_name]
-          term_types = %w[preferred admitted deprecated]
+        def get_concept(dataset_name, concept_name)
+          @datasets[dataset_name].find do |c|
+            c.data.localizations["eng"]
+              .data.terms[0]
+              .designation == concept_name
+          end
+        end
 
-          concept["eng"]["terms"][1..-1].map do |term|
-            type = if term_types.include?(term["normative_status"])
-                     term["normative_status"]
+        def concept_title(dataset_name, concept_name)
+          concept = get_concept(dataset_name, concept_name)
+          concept.data.localizations["eng"].data.terms[0].designation
+        end
+
+        def concept_definition(dataset_name, concept_name)
+          concept = get_concept(dataset_name, concept_name)
+          definition = concept.data.localizations["eng"].data
+            .definition[0].content
+          "{% raw %}#{definition}{% endraw %}"
+        end
+
+        def alt_terms(dataset_name, concept_name) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
+          concept = get_concept(dataset_name, concept_name)
+          term_types = %w[preferred admitted deprecated]
+          concept_terms = concept.data.localizations["eng"].data.terms
+
+          concept_terms[1..-1].map do |term|
+            type = if term_types.include?(term.normative_status)
+                     term.normative_status
                    else
                      "alt"
                    end
-            "#{type}:[#{term['designation']}]"
+            "#{type}:[#{term.designation}]"
           end.join("\n")
         end
 
-        def examples(dataset_name, concept_name)
-          <<~EXAMPLES
-            {% for example in #{dataset_name}['#{concept_name}']['eng'].examples %}
-            [example]
-            {{ example.content }}
+        def examples(dataset_name, concept_name) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
+          concept = get_concept(dataset_name, concept_name)
+          examples = concept.data.localizations["eng"].data.examples
+          result = []
 
-            {% endfor %}
-          EXAMPLES
+          examples.each do |example|
+            content = <<~EXAMPLE
+              [example]
+              {% raw %}#{example.content}{% endraw %}
+
+            EXAMPLE
+            result << content
+          end
+
+          result.join("\n")
         end
 
-        def notes(dataset_name, concept_name)
-          <<~NOTES
-            {% for note in #{dataset_name}['#{concept_name}']['eng'].notes %}
-            [NOTE]
-            ====
-            {{ note.content }}
-            ====
+        def notes(dataset_name, concept_name) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
+          concept = get_concept(dataset_name, concept_name)
+          notes = concept.data.localizations["eng"].data.notes
+          result = []
 
-            {% endfor %}
-          NOTES
+          notes.each do |note|
+            content = <<~NOTE
+              [NOTE]
+              ====
+              {% raw %}#{note.content}{% endraw %}
+              ====
+
+            NOTE
+            result << content
+          end
+
+          result.join("\n")
         end
 
-        def sources(dataset_name, concept_name)
-          <<~SOURCES
-            {% for source in #{dataset_name}['#{concept_name}']['eng'].sources %}
-            {%- if source.origin.ref == nil or source.origin.ref == '' %}{% continue %}{% endif %}
-            [.source]
-            <<{{ source.origin.ref | replace: ' ', '_' | replace: '/', '_' | replace: ':', '_' }},{{ source.origin.clause }}>>
+        def sources(dataset_name, concept_name) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
+          concept = get_concept(dataset_name, concept_name)
+          sources = concept.data.localizations["eng"].data.sources
+          result = []
 
-            {% endfor %}
-          SOURCES
+          sources.each do |source|
+            if source.origin.text && source.origin.text != ""
+              source_origin_text = source.origin.text
+                .gsub(" ", "_")
+                .gsub("/", "_")
+                .gsub(":", "_")
+              source_content = "#{source_origin_text},#{source.origin.clause}"
+              content = <<~SOURCES
+                [.source]
+                <<{% raw %}#{source_content}{% endraw %}>>
+
+              SOURCES
+              result << content
+            end
+          end
+
+          result.join("\n")
         end
       end
     end
