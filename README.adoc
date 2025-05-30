@@ -348,7 +348,6 @@ unit of knowledge created by a unique combination of characteristics
 
 constituent part of the address
 ----
-
 --------
 ====
 
@@ -735,7 +734,7 @@ Unit of knowledge created by a unique combination of characteristics
 
 [example]
 .Filtering by field value
-====
+======
 Using the same dataset, but filtering for terms related to addressing:
 
 [source,asciidoc]
@@ -781,7 +780,7 @@ An address component may have one or more alternative values, e.g. alternatives
 in different languages or abbreviated alternatives.
 ====
 ----
-====
+======
 
 
 == Appendix
