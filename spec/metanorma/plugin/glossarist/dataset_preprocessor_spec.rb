@@ -4,6 +4,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
   let(:document) { Asciidoctor::Document.new }
 
   it "log" do
+    # Valid command should create a log file
     input = <<~TEXT
       = Document title
       Author
@@ -24,6 +25,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
     metanorma_process(input)
     expect(File.exist?("test.adoc.glossarist.log.txt")).to be true
 
+    # Missing command should not create a log file
     input = <<~TEXT
       = Document title
       Author
