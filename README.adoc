@@ -1,0 +1,837 @@
+= Metanorma Glossarist plugin (metanorma-plugin-glossarist)
+
+image:https://github.com/metanorma/metanorma-plugin-glossarist/workflows/rake/badge.svg["Build Status", link="https://github.com/metanorma/metanorma-plugin-glossarist/actions?workflow=rake"]
+
+== Purpose
+
+Glossarist is the https://github.com/glossarist/concept-model[concept model]
+created and published by the https://www.glossarist.org[Glossarist Project].
+
+
+== Glossarist concept model
+
+The Glossarist model is a structured way to represent concepts and terms
+in a consistent and standardized manner. It is designed to be used in
+various contexts, including standards, technical documentation, and
+knowledge management systems.
+
+The model was originally developed to handle the terminology database of
+the https://www.electropedia.org/[IEC 60050 International Electrotechnical Vocabulary (IEV)]
+and is a superset of the https://www.iso.org/standard/40362.html[ISO 10241-1]
+concept model used in the ISO Directives.
+
+The Glossarist model is used by the
+https://isotc211.geolexica.org/[ISO/TC 211 Multilingual Glossary of Terms],
+https://isotc204.geolexica.org[ISO/TC 204 Geolexica for Intelligent transport systems (ISO 14812)]
+and the https://osgeo.geolexica.org[OSGeo Glossary].
+
+This plugin allows you to access the Glossarist dataset inside a Metanorma
+document, render concepts, and generate bibliographies for terms defined in the
+dataset.
+
+The https://www.iso.org/standard/81196.html[ISO 10303-2:2024] and
+https://www.iso.org/standard/77019.html[ISO 34000:2023] standards were published
+using this plugin.
+
+The full concept model (a concept can have multiple localized concepts) is
+available via the https://github.com/glossarist/glossarist-ruby[Glossarist] gem.
+
+Language codes used in Glossarist are ISO 639-* 3-character codes, as described
+in the https://github.com/glossarist/concept-model[Glossarist Concept model].
+
+== Installation
+
+This plugin is included in the default Metanorma distribution.
+
+== Usage
+
+=== General
+
+This plugin is used to load a Glossarist dataset, render concepts from it,
+and generate bibliographies for terms defined in the dataset.
+
+A Glossarist dataset typically consists of one or more YAML files, where a
+single file usually contains a single concept (potentially multilingual) and all
+its associated data, such as definitions, examples, notes, sources, and
+bibliographic references.
+
+The general workflow for using this plugin is as follows:
+
+. Load a Glossarist dataset globally or for a block
+. Render terms from the loaded dataset
+. Generate bibliographies for terms in the dataset
+
+Steps 2 and 3 are separate steps as a Metanorma document typically contains
+separate terms sections and bibliography sections, hence the plugin allows you
+to render terms and bibliographies independently.
+
+While the plugin provides commands for steps 2 and 3, it is also possible to
+render such content using the Liquid templating language directly in a
+Glossarist block.
+
+There are two ways to use this plugin:
+
+* Use a Glossarist block together with a custom template.
+* Use the commands provided by the plugin to render terms and bibliographies.
+
+=== Using a Glossarist block
+
+This plugin provides a Glossarist block that allows you to load a Glossarist
+dataset and render terms from it using a Liquid template.
+
+Syntax:
+
+[source,adoc]
+------
+[glossarist,{dataset-path},{filters},{context}]
+----
+// Liquid template
+----
+------
+
+Where,
+
+`{dataset-path}`:: The path to the Glossarist dataset (e.g.,
+`./path/to/glossarist-dataset`).
+
+`{context}`:: The context in which the dataset is being used (e.g., `concepts`).
+
+`{filters}`:: (Optional) Filters to apply to the dataset prior to making the
+`context` available.
+
+[example]
+======
+Given the following Glossarist block:
+
+[source,adoc]
+------
+[glossarist,my-dataset,concepts]
+----
+{%- for concept in concepts -%}
+==== {{ concept.data.localizations['eng'].data.terms[0].designation }}
+
+{{ concept.data.localizations['eng'].data.definition[0].content }}
+{%- endfor -%}
+----
+------
+
+With the following Glossarist dataset:
+
+`my-dataset/concept-concept.yaml`:
+[source,yaml]
+----
+---
+data:
+  identifier: '64'
+  localized_concepts:
+    eng: localized-concept-eng
+    ara: localized-concept-ara
+    dan: localized-concept-dan
+    deu: localized-concept-deu
+    kor: localized-concept-kor
+    msa: localized-concept-msa
+    rus: localized-concept-rus
+    spa: localized-concept-spa
+    swe: localized-concept-swe
+dateAccepted: 2008-11-15 00:00:00.000000000 +05:00
+id: db4ac6ad-9b2c-5dd0-93ad-b1c06365cfb8
+related: []
+status: valid
+----
+
+`my-dataset/localized-concept-eng.yaml`:
+[source,yaml]
+----
+---
+data:
+  dates:
+  - date: 2008-11-15 00:00:00.000000000 +05:00
+    type: accepted
+  definition:
+  - content: unit of knowledge created by a unique combination of characteristics
+  examples: []
+  id: '64'
+  notes:
+  - content: Concepts are not necessarily bound to particular languages.  They are,
+      however, influenced by the social or cultural background which often leads to
+      different categorizations.
+  release: 2.0
+  sources:
+  - origin:
+      ref: ISO 1087-1:2000
+      clause: 3.2.1
+      link: https://www.iso.org/standard/20057.html
+    type: authoritative
+    status: unspecified
+  - origin:
+      ref: ISO/TS 19104:2008
+    type: lineage
+    status: unspecified
+  terms:
+  - type: expression
+    normative_status: preferred
+    designation: concept
+  language_code: eng
+  entry_status: valid
+  review_date: 2013-01-29 00:00:00.000000000 +05:00
+  review_decision_date: 2016-10-01 00:00:00.000000000 +05:00
+  review_decision_event: Publication of ISO 19104:2016
+dateAccepted: 2008-11-15 00:00:00.000000000 +05:00
+id: 000bb787-0d0f-5330-b07d-3469adbe9289
+status: valid
+----
+
+`my-dataset/concept-address-component.yaml`:
+[source,yaml]
+----
+---
+data:
+  identifier: '64'
+  localized_concepts:
+    eng: localized-address-component-eng
+    ara: localized-address-component-ara
+    dan: localized-address-component-dan
+    deu: localized-address-component-deu
+    kor: localized-address-component-kor
+    msa: localized-address-component-msa
+    rus: localized-address-component-rus
+    spa: localized-address-component-spa
+    swe: localized-address-component-swe
+dateAccepted: 2008-11-15 00:00:00.000000000 +05:00
+id: db4ac6ad-9b2c-5dd0-93ad-b1c06365cfb8
+related: []
+status: valid
+----
+
+`my-dataset/localized-address-component-eng.yaml`:
+[source,yaml]
+----
+---
+data:
+  dates:
+  - date: 2015-12-15 00:00:00.000000000 +05:00
+    type: accepted
+  definition:
+  - content: constituent part of the address
+  examples: []
+  id: '1553'
+  notes:
+  - content: An address component may reference another object such as a spatial object
+      (e.g. an administrative boundary or a land parcel) or a non-spatial object (e.g.
+      an organization or a person).
+  - content: An address component may have one or more alternative values, e.g. alternatives
+      in different languages or abbreviated alternatives.
+  release: 4.0
+  sources:
+  - origin:
+      ref: ISO 19160-1:2015
+      clause: '4.5'
+      link: https://www.iso.org/standard/61710.html
+    type: authoritative
+  terms:
+  - type: expression
+    normative_status: preferred
+    designation: address component
+  language_code: eng
+  entry_status: valid
+  review_date: 2012-02-27 00:00:00.000000000 +05:00
+  review_decision_date: 2015-12-15 00:00:00.000000000 +05:00
+  review_decision_event: Normal ISO processing
+dateAccepted: 2015-12-15 00:00:00.000000000 +05:00
+id: 02f7c47b-8820-59a6-a82e-127103ea42ec
+status: valid
+----
+
+The output will be:
+
+[source,adoc]
+----
+==== concept
+
+unit of knowledge created by a unique combination of characteristics
+
+==== address component
+
+constituent part of the address
+----
+======
+
+
+In the block syntax, filters can be applied to the dataset to filter or sort the
+concepts based on specific criteria. For example, you can filter concepts by
+group or language, or sort them by term.
+
+Multiple filters can be applied by separating them with a semicolon `;`.
+
+.Using multiple filters
+[example]
+====
+[source,adoc]
+------
+[glossarist,dataset,filter='group=foo;sort_by=term',concepts]
+----
+...
+----
+------
+====
+
+
+The following types of filters are supported:
+
+Collection filters:: These filters are applied to the entire dataset and affect
+which concepts are loaded into the block.
+
+`sort_by=<field name>`::: Sorts the dataset in ascending order of the given
+field values. The field `term` is a special case, where it sorts according to
+the `default_designation` of the term.
++
+[example]
+`sort_by=term` will sort concepts in ascending order based on the
+default term (which is the first English designation, at `data.localizations['eng'].data.terms[0].designation`).
+
+`lang=<language code>`::: Loads concepts in the specified language.
++
+[example]
+`lang=ara` loads all localized concepts of Arabic for all concepts.
+
+`group=<group name>`::: Loads concepts that belong to the specified group. Group is a dataset-specific
+field that can be used to categorize concepts.
++
+[example]
+`group=foo` will only load concepts that have a group named `foo`.
+
+Field filters:: These filters are applied to individual fields of the concepts
+and affect which concepts are included in the block based on the values of those
+fields.
+
+`{path}=({value})`::: Value match. Loads concepts where the value of the
+specified field matches the given value.
++
+[example]
+`data.localizations['eng'].data.terms[0].designation=entity` will only load
+  concepts where the English term is "entity".
+
+`start_with({value})`::: Value starts with. Loads concepts where the specified field starts with the given value.
++
+[example]
+`data.localizations['eng'].data.terms[0].designation.start_with(enti)` will only
+load concepts where the English term starts with "enti".
+
+
+[example]
+====
+[source,adoc]
+--------
+Given the following Glossarist block:
+
+[source,adoc]
+------
+[glossarist,glossarist-v2,filter='data.localizations['eng'].data.terms[0].designation.start_with(conc)',concepts]
+----
+{%- for concept in concepts -%}
+==== {{ concept.data.localizations['eng'].data.terms[0].designation }}
+
+{{ concept.data.localizations['eng'].data.definition[0].content }}
+{%- endfor -%}
+----
+------
+
+The output will be:
+
+[source,adoc]
+----
+==== concept
+
+unit of knowledge created by a unique combination of characteristics
+
+==== address component
+
+constituent part of the address
+----
+
+--------
+====
+
+
+=== Loading a Glossarist dataset globally
+
+In cases where the document works mainly with a single Glossarist dataset, it is
+possible to load the dataset globally at the beginning of the document for
+performance reasons. This allows you to use the dataset in any block without
+having to specify the dataset path again.
+
+Glossarist provides the `:glossarist-dataset:` syntax in the document attributes
+section to load a dataset globally. Each dataset will henceforth be identified
+by the unique name and path.
+
+Syntax:
+
+[source,adoc]
+----
+// header
+:glossarist-dataset: {dataset1-name}:{dataset1-path};{dataset2-name}:{dataset2-path}
+
+// content
+----
+
+Where,
+
+`{dataset-name}`:: The name of the dataset (e.g., `dataset`).
+
+`{dataset-path}`:: The path to the Glossarist dataset (e.g., `./path/to/glossarist-dataset`).
+
+One or more datasets can be loaded by separating them with a semicolon `;`.
+
+These datasets can then be used in any Glossarist block in the document
+without having to specify the dataset path again.
+
+[example]
+====
+[source,adoc]
+------
+:glossarist-dataset: dataset1:./path/to/glossarist-dataset1;dataset2:./path/to/glossarist-dataset2
+
+=== Terms and definitions
+[glossarist,dataset1,concepts]
+----
+{%- for concept in concepts -%}
+Term: {{ concept.data.localizations['eng'].data.terms[0].designation }}
+
+{%- endfor -%}
+----
+------
+
+The output will be:
+
+[source,adoc]
+----
+=== Terms and definitions
+Term: concept
+
+Term: address component
+----
+====
+
+
+=== Glossarist predefined templates
+
+==== General
+
+Glossarist provides predefined templates for rendering concepts and
+bibliographies.
+
+==== Rendering one concept
+
+The `glossarist::render[{dataset-name},{term}]` command renders a single concept
+from the globally loaded dataset.
+
+Syntax:
+
+[source,adoc]
+----
+glossarist::render[{dataset-name}, {term}]
+----
+
+Where,
+
+`{dataset-name}`:: The name of the dataset (e.g., `dataset`).
+
+`{term}`:: The term to render (e.g., `foobar`).
++
+NOTE: The `term` points to the
+`data.localizations['eng'].data.terms[0].designation` field of the concept.
+
+[example]
+====
+Given the following code:
+
+[source,adoc]
+----
+:glossarist-dataset: dataset:my-dataset
+
+=== Terms and definitions
+
+glossarist::render[dataset,concept]
+----
+
+The output will be:
+
+[source,adoc]
+----
+=== Terms and definitions
+
+==== concept
+
+unit of knowledge created by a unique combination of characteristics
+
+[NOTE]
+Concepts are not necessarily bound to particular languages.  They are, however,
+influenced by the social or cultural background which often leads to different
+categorizations.
+
+[.source]
+<<ISO_1087-1_2000,3.2.1>>
+----
+====
+
+The command automatically detects section depth (e.g., `=== Terms and
+definitions` is at depth 2) and renders the concept at "depth + 1". It uses the
+default template for rendering a single concept, which is defined in the plugin.
+
+The default template for rendering a single concept is used, and is provided at
+<<default-template-for-rendering-concepts>>.
+
+==== Rendering all concepts
+
+The `glossarist::import[{dataset-name}]` command renders all concepts from the
+globally loaded dataset.
+
+Syntax:
+
+[source,adoc]
+----
+glossarist::import[{dataset-name}]
+----
+
+Where,
+
+`{dataset-name}`:: The name of the dataset (e.g., `dataset`).
+
+[example]
+======
+Given the following code:
+
+[source,adoc]
+----
+:glossarist-dataset: dataset:my-dataset
+
+=== Terms and definitions
+
+glossarist::import[dataset]
+----
+
+The output will be:
+
+[source,adoc]
+----
+=== Terms and definitions
+
+==== concept
+
+unit of knowledge created by a unique combination of characteristics
+
+[NOTE]
+====
+Concepts are not necessarily bound to particular languages.  They are, however,
+influenced by the social or cultural background which often leads to different
+categorizations.
+====
+
+[.source]
+<<ISO_1087-1_2000,3.2.1>>
+
+==== address component
+
+constituent part of the address
+
+[NOTE]
+====
+An address component may reference another object such as a spatial object
+(e.g. an administrative boundary or a land parcel) or a non-spatial object (e.g.
+an organization or a person).
+====
+
+[NOTE]
+====
+An address component may have one or more alternative values, e.g. alternatives
+for "street" could include "road", "avenue", or "boulevard".
+====
+
+[.source]
+<<ISO_19160-1_2015,4.5>>
+----
+======
+
+
+==== Bibliography for a single term
+
+The `glossarist::render_bibliography_entry[{dataset-name}, {term}]` command renders
+a bibliography entry for a single term in the globally loaded dataset.
+
+Syntax:
+
+[source,adoc]
+----
+glossarist::render_bibliography_entry[{dataset-name}, {term}]
+----
+
+Where,
+
+`{dataset-name}`:: The name of the dataset (e.g., `dataset`).
+
+`{term}`:: The term to render the bibliography for (e.g., `foo`).
+
+The command automatically detects the bibliographic reference for the term and
+renders it using the default template for bibliography, which is defined in
+<<default-template-for-bibliography>>.
+
+[example]
+====
+Given the following code:
+
+[source,adoc]
+----
+:glossarist-dataset: dataset:my-dataset
+
+...
+
+[bibliography]
+== Bibliography
+
+glossarist::render_bibliography_entry[dataset, foo]
+----
+
+The output will be:
+
+[source,adoc]
+----
+== Bibliography
+
+* [[[ISO_1087-1_2000,ISO 1087-1:2000]]]
+----
+====
+
+==== Bibliography for all terms
+
+The `glossarist::render_bibliography[{dataset-name}]` command renders a
+bibliography for all terms in the globally loaded dataset.
+
+Syntax:
+
+[source,adoc]
+----
+glossarist::render_bibliography[{dataset-name}]
+----
+
+Where,
+
+`{dataset-name}`:: The name of the dataset (e.g., `dataset`).
+
+[example]
+====
+Given the following code:
+
+[source,adoc]
+----
+:glossarist-dataset: dataset:my-dataset
+
+[bibliography]
+== Bibliography
+
+glossarist::render_bibliography[dataset]
+----
+
+The output will be:
+
+[source,adoc]
+----
+== Bibliography
+
+* [[[ISO_1087-1_2000,ISO 1087-1:2000]]]
+* [[[ISO_19160-1_2015,ISO 19160-1:2015]]]
+----
+====
+
+
+== Extended examples
+
+This section provides extended examples of using the Glossarist plugin with realistic sample data.
+
+[example]
+.Basic rendering of all terms
+====
+Suppose we have the following terms in our dataset:
+
+|===
+| Name | Definition | Groups
+
+| concept
+| Unit of knowledge created by a unique combination of characteristics
+| terminology
+
+| address component
+| Constituent part of the address
+| addressing, location
+
+| spatial reference system
+| System for identifying position in the real world
+| geospatial, coordinate
+|===
+
+Using the following Glossarist block:
+
+[source,asciidoc]
+------
+=== Terms and definitions
+[glossarist, /path/to/glossarist-dataset, dataset]
+----
+{%- for concept in dataset -%}
+==== {{ concept.data.localizations['eng'].data.terms[0].designation }}
+
+{{ concept.data.localizations['eng'].data.definition[0].content }}
+{%- endfor -%}
+----
+------
+
+The output will be:
+
+[source,asciidoc]
+----
+=== Terms and definitions
+
+==== concept
+
+Unit of knowledge created by a unique combination of characteristics
+
+==== address component
+
+Constituent part of the address
+
+==== spatial reference system
+
+System for identifying position in the real world
+----
+====
+
+[example]
+.Applying sorting and filtering by group
+====
+Using the same dataset as above, but with sorting and filtering by the "terminology" group:
+
+[source,asciidoc]
+------
+=== Terms and definitions
+[glossarist, /path/to/glossarist-dataset, filter='group=terminology;sort_by=term', dataset]
+----
+{%- for concept in dataset -%}
+==== {{ concept.data.localizations['eng'].data.terms[0].designation }}
+
+{{ concept.data.localizations['eng'].data.definition[0].content }}
+{%- endfor -%}
+----
+------
+
+The output will be:
+
+[source,asciidoc]
+----
+=== Terms and definitions
+
+==== concept
+
+Unit of knowledge created by a unique combination of characteristics
+----
+====
+
+[example]
+.Filtering by field value
+====
+Using the same dataset, but filtering for terms related to addressing:
+
+[source,asciidoc]
+------
+=== Terms and definitions
+[glossarist, /path/to/glossarist-dataset, filter='group=addressing', dataset]
+----
+{%- for concept in dataset -%}
+==== {{ concept.data.localizations['eng'].data.terms[0].designation }}
+
+{{ concept.data.localizations['eng'].data.definition[0].content }}
+
+{% for note in concept.data.localizations['eng'].data.notes %}
+[NOTE]
+====
+{{ note.content }}
+====
+{% endfor %}
+{%- endfor -%}
+----
+------
+
+The output will be:
+
+[source,asciidoc]
+----
+=== Terms and definitions
+
+==== address component
+
+Constituent part of the address
+
+[NOTE]
+====
+An address component may reference another object such as a spatial object
+(e.g. an administrative boundary or a land parcel) or a non-spatial object (e.g.
+an organization or a person).
+====
+
+[NOTE]
+====
+An address component may have one or more alternative values, e.g. alternatives
+in different languages or abbreviated alternatives.
+====
+----
+====
+
+
+== Appendix
+
+[[default-template-for-rendering-concepts]]
+=== Default template for rendering concepts
+
+[source,asciidoc]
+----
+==== {{ concept.data.localizations['eng'].data.terms[0].designation }}
+<type>:[designation for the type]
+
+{{ concept.data.localizations['eng'].data.definition[0].content }}
+
+{% for example in <concept.data.localizations['eng'].data.examples> %}
+[example]
+{{ example.content }}
+
+{% endfor %}
+
+{% for note in <concept.data.localizations['eng'].data.notes> %}
+[NOTE]
+====
+{{ note.content }}
+====
+
+{% endfor %}
+
+{% for source in <concept.data.localizations['eng'].data.sources> %}
+[.source]
+<<{{ <source.origin.text.gsub(" ", "_").gsub("/", "_").gsub(":", "_")>,<source.origin.clause> }}>>
+
+{% endfor %}
+----
+
+
+[[default-template-for-bibliography]]
+=== Default template for bibliography
+
+[source,asciidoc]
+----
+* [[[{{ <source.origin.text.gsub(" ", "_").gsub("/", "_").gsub(":", "_")>,<source.origin.clause> }},{{source.origin.text}}]]]
+----
+
+== Documentation
+
+Please refer to https://www.metanorma.org.
+
+== Copyright and license
+
+Copyright Ribose.
+
+Licensed under the MIT License.
