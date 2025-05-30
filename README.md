@@ -20,7 +20,7 @@ Or install it yourself as:
 
 ## Usage
 
-In order to use the macros in Metanorma, add the gem gem `metanorma-plugin-glossarist` in your Gemfile.
+In order to use the macros in Metanorma, add the gem `metanorma-plugin-glossarist` in your Gemfile.
 
 ## Available Macros
 
@@ -52,7 +52,9 @@ Suppose we have a term named `foobar` in our dataset with the definition `The te
 :glossarist-dataset: dataset:./path/to/glossarist-dataset
 
 === Section 1
-{{ dataset['foobar']['eng'].definition[0].content }}
+{%- for concept in dataset -%}
+{{ concept.data.localizations['eng'].data.definition[0].content }}
+{%- endfor -%}
 ```
 
 this will output
@@ -67,8 +69,8 @@ The term foobar is used as metasyntactic variables and placeholder names in comp
 This will load the glossarist data from `<dataset path>` into `<dataset name>` which can be used in the given block. Filters are optional and can be used to filter and/or sort the loaded concepts from the glossarist dataset multiple filters can be added by separating them with a semicolon `;`. Filter can be added by adding `filter='<filters to apply>;<another filter>'`
 
 Available filters are:
-- `sort_by:<field name>`: will sort the dataset in ascending order of the given field values e.g `sort_by:term` will sort concepts in ascending order based on the term.
-- `<field name>:<values>`: will only load a concept if the value of the given field name is equal to the given value e.g `group=foo` will only load a concept if it has a group named `foo` or `lang=ara` will only load Arabic translations for all concepts.
+- `sort_by=<field name>`: will sort the dataset in ascending order of the given field values e.g `sort_by=term` will sort concepts in ascending order based on the default term (`data.localizations['eng'].data.terms[0].designation`).
+- `<field name>=<values>`: will only load a concept if the value of the given field name is equal to the given value e.g `group=foo` will only load a concept if it has a group named `foo` or `lang=ara` will only load Arabic translations for all concepts.
 
 #### Example
 
@@ -81,13 +83,13 @@ Suppose we have the following terms in our dataset
 | baz | The term baz is used as metasyntactic variables and placeholder names in computer programming | baz |
 
 ```adoc
-=== Definitions
+=== Section 1
 [glossarist, /path/to/glossarist-dataset, dataset]
 ----
 {%- for concept in dataset -%}
-==== {{ concept.term }}
+==== {{ concept.data.localizations['eng'].data.terms[0].designation }}
 
-{{ concept.eng.definition[0].content }}
+{{ concept.data.localizations['eng'].data.definition[0].content }}
 {%- endfor -%}
 ----
 ```
@@ -113,13 +115,13 @@ The term baz is used as metasyntactic variables and placeholder names in compute
 Applying sorting and filtering by group
 
 ```adoc
-=== Definitions
+=== Section 1
 [glossarist, /path/to/glossarist-dataset, filter='group=foo;sort_by=term', dataset]
 ----
 {%- for concept in dataset -%}
-==== {{ concept.term }}
+==== {{ concept.data.localizations['eng'].data.terms[0].designation }}
 
-{{ concept.eng.definition[0].content }}
+{{ concept.data.localizations['eng'].data.definition[0].content }}
 {%- endfor -%}
 ----
 ```
@@ -138,193 +140,11 @@ The term bar is used as metasyntactic variables and placeholder names in compute
 The term foo is used as metasyntactic variables and placeholder names in computer programming
 ```
 
-The full concept model (a concept can have multiple localized concepts) is available through the block as follows:
-
-```ruby
-{
-  # UUIDs for localized concept mappings
-  "localized_concepts" => {
-    "eng" => "<uuid>",  # English concept UUID
-    "fre" => "<uuid>"   # French concept UUID
-  },
-
-  # Main concept term
-  "term" => "<string>",
-  
-  # Language-specific content (structure repeated for each language code)
-  "<language_code>" => {
-    "dates" => [],      # Array of relevant dates
-    "definition" => [   # Array of definition objects
-      {
-        "content" => "<string>"  # Definition text
-      }
-    ],
-    "examples" => [],   # Array of example objects
-    "id" => "<string>", # Concept ID
-    
-    "notes" => [        # Array of note objects
-      {
-        "content" => "<string>"  # Note text
-      }
-    ],
-    
-    "sources" => [      # Array of source objects
-      {
-        "origin" => {
-          "ref" => "<string>"    # Reference citation
-        },
-        "type" => "<string>",    # Source type (e.g. "lineage")
-        "status" => "<string>"   # Status (e.g. "identical")
-      }
-    ],
-    
-    "terms" => [        # Array of term objects
-      {
-        "type" => "<string>",              # Term type (e.g. "expression")
-        "normative_status" => "<string>",  # Status (e.g. "preferred")
-        "designation" => "<string>",       # Term text
-        "grammar_info" => [                # Array of grammar objects
-          {
-            "preposition" => boolean,
-            "participle" => boolean,
-            "adj" => boolean,
-            "verb" => boolean,
-            "adverb" => boolean,
-            "noun" => boolean,
-            "gender" => ["<string>"],      # Array of grammatical genders
-            "number" => ["<string>"]       # Array of grammatical numbers
-          }
-        ]
-      }
-    ],
-    
-    "language_code" => "<string>"  # ISO language code
-  }
-}
-```
+The full concept model (a concept can have multiple localized concepts) is available via the gem [Glossarist](https://github.com/glossarist/glossarist-ruby).
 
 The language codes used are ISO 639-* 3-character codes, as described in the
 [Glossarist Concept model](https://github.com/glossarist/concept-model).
 
-An example of the full model (from ISO/IEC 2382:2015):
-
-```ruby
-{
-  "localized_concepts" => {
-    "eng" => "01134f51-b88c-5214-8909-5d271ea619cf",
-    "fre" => "f290a3af-f1b3-527a-9045-a2dfcc0caf5a"
-  },
-  "term" => "concept description",
-  "eng" => {
-    "dates" => [],
-    "definition" => [
-      {
-        "content" => "data structure describing the class of all known instances of a concept"
-      }
-    ],
-    "examples" => [],
-    "id" => "2122978",
-    "notes" => [
-      {
-        "content" => "concept description: term and definition standardized by ISO/IEC [ISO/IEC 2382-31:1997]."
-      },
-      {
-        "content" => "31.02.02 (2382)"
-      }
-    ],
-    "sources" => [
-      {
-        "origin" => {
-          "ref" => "ISO/IEC 2382-31:1997"
-        },
-        "type" => "lineage",
-        "status" => "identical"
-      },
-      {
-        "origin" => {
-          "ref" => "Ranger, Natalie * 2006 * Bureau de la traduction / Translation Bureau * Services linguistiques / Linguistic Services * Bur. dir. Centre de traduction et de terminologie / Dir's Office Translation and Terminology Centre * Div. Citoyenneté et Protection civile / Citizen. & Emergency preparedness Div. * Normalisation terminologique / Terminology Standardization"
-        },
-        "type" => "lineage",
-        "status" => "identical"
-      }
-    ],
-    "terms" => [
-      {
-        "type" => "expression",
-        "normative_status" => "preferred",
-        "designation" => "concept description",
-        "grammar_info" => [
-          {
-            "preposition" => false,
-            "participle" => false,
-            "adj" => false,
-            "verb" => false,
-            "adverb" => false,
-            "noun" => false,
-            "gender" => [],
-            "number" => ["singular"]
-          }
-        ]
-      }
-    ],
-    "language_code" => "eng"
-  },
-  "fre" => {
-    "dates" => [],
-    "definition" => [
-      {
-        "content" => "structure de données qui décrit la classe des instances connues d'un concept"
-      }
-    ],
-    "examples" => [],
-    "id" => "2122978",
-    "notes" => [
-      {
-        "content" => "description de concept : terme et définition normalisés par l'ISO/CEI [ISO/IEC 2382-31:1997]."
-      },
-      {
-        "content" => "31.02.02 (2382)"
-      }
-    ],
-    "sources" => [
-      {
-        "origin" => {
-          "ref" => "ISO/IEC 2382-31:1997"
-        },
-        "type" => "lineage",
-        "status" => "identical"
-      },
-      {
-        "origin" => {
-          "ref" => "Ranger, Natalie * 2006 * Bureau de la traduction / Translation Bureau * Services linguistiques / Linguistic Services * Bur. dir. Centre de traduction et de terminologie / Dir's Office Translation and Terminology Centre * Div. Citoyenneté et Protection civile / Citizen. & Emergency preparedness Div. * Normalisation terminologique / Terminology Standardization"
-        },
-        "type" => "lineage",
-        "status" => "identical"
-      }
-    ],
-    "terms" => [
-      {
-        "type" => "expression",
-        "normative_status" => "preferred",
-        "designation" => "description de concept",
-        "grammar_info" => [
-          {
-            "preposition" => false,
-            "participle" => false,
-            "adj" => false,
-            "verb" => false,
-            "adverb" => false,
-            "noun" => false,
-            "gender" => ["f"],
-            "number" => ["singular"]
-          }
-        ]
-      }
-    ],
-    "language_code" => "fre"
-  }
-}
-```
 
 ### Rendering a single term from loaded dataset
 
@@ -421,18 +241,18 @@ then the output will be
 ### Default template for rendering concepts
 
 ```adoc
-==== {{ concept.term }}
+==== {{ concept.data.localizations['eng'].data.terms[0].designation }}
 <type>:[designation for the type]
 
-{{ dataset[<concept name>]['eng'].definition[0].content }}
+{{ concept.data.localizations['eng'].data.definition[0].content }}
 
-{% for example in <dataset name>[<concept name>]['eng'].examples %}
+{% for example in <concept.data.localizations['eng'].data.examples> %}
 [example]
 {{ example.content }}
 
 {% endfor %}
 
-{% for note in <dataset name>[<concept name>]['eng'].notes %}
+{% for note in <concept.data.localizations['eng'].data.notes> %}
 [NOTE]
 ====
 {{ note.content }}
@@ -440,9 +260,9 @@ then the output will be
 
 {% endfor %}
 
-{% for source in <dataset name>[<concept name>]['eng'].sources %}
+{% for source in <concept.data.localizations['eng'].data.sources> %}
 [.source]
-<<{{ source.origin.ref | replace: ' ', '_' | replace: '/', '_' | replace: ':', '_' }},{{ source.origin.clause }}>>
+<<{{ <source.origin.text.gsub(" ", "_").gsub("/", "_").gsub(":", "_")>,<source.origin.clause> }}>>
 
 {% endfor %}
 ```
@@ -470,7 +290,7 @@ note for the term
 ### Default template for bibliography
 
 ```adoc
-* [[[{{ source.origin.ref | replace: ' ', '_' | replace: '/', '_' | replace: ':', '_' }},{{ source.origin.clause }},{{source.origin.ref}}]]]
+* [[[{{ <source.origin.text.gsub(" ", "_").gsub("/", "_").gsub(":", "_")>,<source.origin.clause> }},{{source.origin.text}}]]]
 ```
 
 

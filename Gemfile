@@ -11,4 +11,8 @@ gem "rspec", "~> 3.0"
 
 gemspec
 
-eval_gemfile("Gemfile.devel") rescue nil
+begin
+  eval_gemfile("Gemfile.devel")
+rescue StandardError
+  nil
+end
