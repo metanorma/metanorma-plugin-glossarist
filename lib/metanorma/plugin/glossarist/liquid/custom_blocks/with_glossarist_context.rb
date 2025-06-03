@@ -69,11 +69,11 @@ module Metanorma
 
                 # check if the last field is a start_with condition
                 if fields.last.start_with?("start_with(") &&
-                  fields.last.include?(")")
+                    fields.last.include?(")")
                   start_with = true
                   # Extract content between first '(' and last ')'
-                  field = fields.last
-                  value = field[(field.index("(") + 1)...field.rindex(")")]
+                  f = fields.last
+                  value = f[(f.index("(") + 1)...f.rindex(")")]
                   fields = fields[0..-2]
                 end
 
