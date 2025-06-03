@@ -362,9 +362,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
 
             === Render Section
             {%- for concept in dataset1 -%}
-            {%- if concept.data.localizations['eng'].data.terms[0].designation == 'entity' %}
             {{ concept.data.localizations['eng'].data.definition[0].content }}
-            {% endif -%}
             {%- endfor -%}
           TEMPLATE
         end
@@ -372,7 +370,48 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
         let(:expected_output) do
           <<~OUTPUT.strip
             === Render Section
+            {%- for concept in dataset1 -%}
+            {{ concept.data.localizations['eng'].data.definition[0].content }}
+            {%- endfor -%}
+          OUTPUT
+        end
+
+        it "should not render dataset as it is not loaded globally" do
+          expect(subject.process(document, reader).source.strip)
+            .to eq(expected_output)
+        end
+      end
+
+      context "[load dataset with glossarist block]" do
+        let(:reader) do
+          Asciidoctor::Reader.new <<~TEMPLATE
+            :glossarist-dataset: dataset1:./spec/fixtures/dataset-glossarist-v2
+
+            === Section 1
+            [glossarist,dataset1,filter='group=foo;sort_by=term',concepts]
+            ----
+            {% for concept in concepts %}
+            ==== {{ concept.data.localizations['eng'].data.terms[0].designation }}
+
+            {{ concept.data.localizations['eng'].data.definition[0].content }}
+            {% endfor %}
+            ----
+          TEMPLATE
+        end
+
+        let(:expected_output) do
+          <<~OUTPUT.strip
+            === Section 1
+
+
+            ==== entity
+
             concrete or abstract thing that exists, did exist, or can possibly exist, including associations among these things
+
+            ==== material entity
+
+            {{entity}} that occupies three-dimensional space
+
           OUTPUT
         end
 

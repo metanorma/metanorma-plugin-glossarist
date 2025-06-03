@@ -80,7 +80,10 @@ module Metanorma
 
         private
 
-        def prepare_document(document, input_lines, end_mark = nil)
+        def prepare_document( # rubocop:disable Metrics/MethodLength
+          document, input_lines, end_mark = nil,
+          skip_dataset: false
+        )
           liquid_doc = Document.new
           liquid_doc.file_system = @config[:file_system]
 
@@ -88,13 +91,19 @@ module Metanorma
             current_line = input_lines.next
             break if end_mark && current_line == end_mark
 
-            process_line(document, input_lines, current_line, liquid_doc)
+            if !(
+              skip_dataset && current_line.start_with?(":glossarist-dataset:")
+            )
+              process_line(document, input_lines, current_line, liquid_doc)
+            end
           end
 
           liquid_doc
         end
 
-        def process_line(document, input_lines, current_line, liquid_doc) # rubocop:disable Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/MethodLength,Metrics/PerceivedComplexity
+        def process_line( # rubocop:disable Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/MethodLength,Metrics/PerceivedComplexity
+          document, input_lines, current_line, liquid_doc
+        )
           if match = current_line.match(GLOSSARIST_DATASET_REGEX)
             process_dataset_tag(document, input_lines, liquid_doc, match)
           elsif match = current_line.match(GLOSSARIST_RENDER_REGEX)
@@ -121,17 +130,15 @@ module Metanorma
 
         def process_dataset_tag(document, input_lines, liquid_doc, match)
           @seen_glossarist << "x"
-          context_names = prepare_dataset_contexts(document, match[1])
+          @context_names = prepare_dataset_contexts(document, match[1])
 
           dataset_section = <<~TEMPLATE
-            {% with_glossarist_context #{context_names} %}
             #{prepare_document(document, input_lines)}
-            {% endwith_glossarist_context %}
           TEMPLATE
 
           liquid_doc.add_content(
             dataset_section,
-            render: true,
+            render: false,
           )
         end
 
@@ -139,12 +146,14 @@ module Metanorma
           @seen_glossarist << "x"
           end_mark = input_lines.next
           # path = relative_file_path(document, match[1])
-
           glossarist_params = prepare_glossarist_block_params(document, match)
 
           glossarist_section = <<~TEMPLATE.strip
             {% with_glossarist_context #{glossarist_params} %}
-            #{prepare_document(document, input_lines, end_mark)}
+            #{prepare_document(
+              document, input_lines, end_mark,
+              skip_dataset: true
+            )}
             {% endwith_glossarist_context %}
           TEMPLATE
 
@@ -155,7 +164,7 @@ module Metanorma
         end
 
         def prepare_glossarist_block_params(document, match)
-          path = relative_file_path(document, match[1])
+          path = get_context_path(document, match[1])
 
           if match[2].strip.start_with?("filter")
             filters = match[2].split("=")[1..-1].join("=").strip
@@ -165,6 +174,22 @@ module Metanorma
             context_name = match[2].strip
             "#{context_name}=#{path}"
           end
+        end
+
+        def get_context_path(document, key) # rubocop:disable Metrics/MethodLength
+          context_path = nil
+          # try to get context_path from glossarist-dataset definition
+          if @context_names
+            context_names = @context_names.split(",").map(&:strip)
+            context_path = context_names.find do |context|
+              context_name, = context.split("=")
+              context_name == key
+            end
+          end
+
+          return context_path.split("=").last.strip if context_path
+
+          relative_file_path(document, key)
         end
 
         def process_render_tag(liquid_doc, match)
@@ -282,7 +307,7 @@ module Metanorma
           concept = get_concept(dataset_name, concept_name)
           definition = concept.data.localizations["eng"].data
             .definition[0].content
-          "{% raw %}#{definition}{% endraw %}"
+          definition.to_s
         end
 
         def alt_terms(dataset_name, concept_name) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
@@ -308,7 +333,7 @@ module Metanorma
           examples.each do |example|
             content = <<~EXAMPLE
               [example]
-              {% raw %}#{example.content}{% endraw %}
+              #{example.content}
 
             EXAMPLE
             result << content
@@ -326,7 +351,7 @@ module Metanorma
             content = <<~NOTE
               [NOTE]
               ====
-              {% raw %}#{note.content}{% endraw %}
+              #{note.content}
               ====
 
             NOTE
@@ -350,7 +375,7 @@ module Metanorma
               source_content = "#{source_origin_text},#{source.origin.clause}"
               content = <<~SOURCES
                 [.source]
-                <<{% raw %}#{source_content}{% endraw %}>>
+                <<#{source_content}>>
 
               SOURCES
               result << content
