@@ -10,6 +10,15 @@ module Metanorma
               list.values
             end
 
+            def sanitize_references(str)
+              return str unless str.match?(/\{\{([^,]*),([^\}]*)\}\}(.*)/)
+
+              matched_str = str.match(/\{\{([^,]*),([^\}]*)\}\}(.*)/)
+              urn = Metanorma::Utils.to_ncname(matched_str[1]).gsub(":", "_")
+
+              "{{#{urn},#{matched_str[2]}}}#{matched_str[3]}"
+            end
+
             def terminological_data(term)
               result = []
 

@@ -11,7 +11,7 @@ data:
       including associations among these things
   notes: []
   examples:
-  - content: "{{person,Person}}, object, event, idea,
+  - content: "{{urn:iso:std:iso:14812:3.1.1.6,person,Person}}, object, event, idea,
       process, etc."
   language_code: eng
   entry_status: valid
