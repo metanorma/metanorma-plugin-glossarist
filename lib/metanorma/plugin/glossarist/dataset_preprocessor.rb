@@ -6,11 +6,14 @@ require "liquid"
 require "asciidoctor/reader"
 require "glossarist"
 require "metanorma/plugin/glossarist/document"
+require "metanorma/plugin/glossarist/liquid/custom_filters/filters"
 
 module Metanorma
   module Plugin
     module Glossarist
       class DatasetPreprocessor < Asciidoctor::Extensions::Preprocessor
+        include Metanorma::Plugin::Glossarist::Liquid::CustomFilters::Filters
+
         GLOSSARIST_DATASET_REGEX = /^:glossarist-dataset:\s*(.*?)$/m.freeze
         GLOSSARIST_IMPORT_REGEX = /^glossarist::import\[(.*?)\]$/m.freeze
         GLOSSARIST_RENDER_REGEX = /^glossarist::render\[(.*?)\]$/m.freeze
@@ -200,11 +203,12 @@ module Metanorma
           render_options = matches[2..-1]
 
           liquid_doc.add_content(
-            concept_template(context_name.strip, concept_name.strip, render_options),
+            concept_template(context_name.strip, concept_name.strip,
+                             render_options),
           )
         end
 
-        def process_import_tag(liquid_doc, match) # rubocop:disable Metrics/AbcSize
+        def process_import_tag(liquid_doc, match) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
           @seen_glossarist << "x"
           matches = match[1].split(",").map(&:strip)
           context_name = matches[0]
@@ -305,13 +309,14 @@ module Metanorma
               .designation == concept_name
           end
         end
+
         def identifier(dataset_name, concept_name, options = {})
-          prefix = "#{options["anchor-prefix"]}" if options["anchor-prefix"]
+          prefix = options["anchor-prefix"].to_s if options["anchor-prefix"]
           concept = get_concept(dataset_name, concept_name)
 
-          id  = "#{prefix}#{concept.data.id}"
+          id = "#{prefix}#{concept.data.id}"
           # id starts with digits 0-9
-          return id if id.start_with?(/[0-9]/) 
+          return id if id.start_with?(/[0-9]/)
 
           Metanorma::Utils.to_ncname(id.gsub(":", "_"))
         end
@@ -331,7 +336,7 @@ module Metanorma
           concept = get_concept(dataset_name, concept_name)
           definition = concept.data.localizations["eng"].data
             .definition[0].content
-          definition.to_s
+          sanitize_references(definition.to_s)
         end
 
         def alt_terms(dataset_name, concept_name) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
@@ -357,7 +362,7 @@ module Metanorma
           examples.each do |example|
             content = <<~EXAMPLE
               [example]
-              #{example.content}
+              #{sanitize_references(example.content)}
 
             EXAMPLE
             result << content
@@ -375,7 +380,7 @@ module Metanorma
             content = <<~NOTE
               [NOTE]
               ====
-              #{note.content}
+              #{sanitize_references(note.content)}
               ====
 
             NOTE
