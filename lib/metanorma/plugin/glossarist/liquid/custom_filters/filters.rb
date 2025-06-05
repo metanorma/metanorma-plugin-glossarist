@@ -6,14 +6,16 @@ module Metanorma
       module Liquid
         module CustomFilters
           module Filters
+            REF_REGEX = /{{([^,]{1,500}),([^\}]{1,500})}}(.*?)$/s.freeze
+
             def values(list)
               list.values
             end
 
             def sanitize_references(str)
-              return str unless str.match?(/\{\{([^,]*),([^\}]*)\}\}(.*)/)
+              return str unless str.match?(REF_REGEX)
 
-              matched_str = str.match(/\{\{([^,]*),([^\}]*)\}\}(.*)/)
+              matched_str = str.match(REF_REGEX)
               urn = Metanorma::Utils.to_ncname(matched_str[1]).gsub(":", "_")
 
               "{{#{urn},#{matched_str[2]}}}#{matched_str[3]}"
