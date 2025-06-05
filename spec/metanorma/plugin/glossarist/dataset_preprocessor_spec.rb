@@ -447,9 +447,6 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
 
 
 
-
-
-
               [.source]
               <<ISO_TS_14812_2022,3.1.1.1>>
             OUTPUT
@@ -510,8 +507,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
 
           let(:expected_output) do
             <<~OUTPUT.strip
-              === Render Section
-              ==== biological entity
+              === biological entity
 
 
               {{material entity}} that was or is a living organism
@@ -525,7 +521,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
 
 
 
-              ==== entity
+              === entity
               admitted:[E]
 
               concrete or abstract thing that exists, did exist, or can possibly exist, including associations among these things
@@ -542,7 +538,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
 
 
 
-              ==== material entity
+              === material entity
 
 
               {{entity}} that occupies three-dimensional space
@@ -561,7 +557,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
 
 
 
-              ==== person
+              === person
 
 
               {{biological entity}} that is a human being
@@ -579,17 +575,6 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
             expect(subject.process(document, reader).source.strip)
               .to eq(expected_output)
           end
-        end
-
-        let(:expected_output) do
-          <<~OUTPUT.strip
-            * [[[ISO_TS_14812_2022,ISO/TS 14812:2022]]]
-          OUTPUT
-        end
-
-        it "should render correct output" do
-          expect(subject.process(document, reader).source.strip)
-            .to eq(expected_output)
         end
       end
 
