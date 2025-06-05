@@ -185,7 +185,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
                 {%- endfor %}
                 {%- endif %}
 
-                {{ concept.data.localizations['eng'].data.definition[0].content }}
+                {{ concept.data.localizations['eng'].data.definition[0].content | sanitize_references }}
                 {% endfor %}
                 ----
 
@@ -211,7 +211,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
 
                 ==== material entity
 
-                {{entity}} that occupies three-dimensional space
+                {{urn_iso_std_iso_14812_3.1.1.1,entity}} that occupies three-dimensional space
 
                 ==== person
 
@@ -240,7 +240,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
                 {% for concept in concepts %}
                 ==== {{ concept.data.localizations['eng'].data.terms[0].designation }}
 
-                {{ concept.data.localizations['eng'].data.definition[0].content }}
+                {{ concept.data.localizations['eng'].data.definition[0].content | sanitize_references }}
                 {% endfor %}
                 ----
 
@@ -261,7 +261,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
 
                 ==== material entity
 
-                {{entity}} that occupies three-dimensional space
+                {{urn_iso_std_iso_14812_3.1.1.1,entity}} that occupies three-dimensional space
 
 
 
@@ -410,7 +410,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
 
             ==== material entity
 
-            {{entity}} that occupies three-dimensional space
+            {{urn:iso:std:iso:14812:3.1.1.1,entity}} that occupies three-dimensional space
 
           OUTPUT
         end
@@ -458,7 +458,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
             concrete or abstract thing that exists, did exist, or can possibly exist, including associations among these things
 
             [example]
-            {{person,Person}}, object, event, idea, process, etc.
+            {{urn_iso_std_iso_14812_3.1.1.6,person,Person}}, object, event, idea, process, etc.
 
 
 
@@ -474,7 +474,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
 
 
 
-            {{entity}} that occupies three-dimensional space
+            {{urn_iso_std_iso_14812_3.1.1.1,entity}} that occupies three-dimensional space
 
 
 
@@ -534,7 +534,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
               concrete or abstract thing that exists, did exist, or can possibly exist, including associations among these things
 
               [example]
-              {{person,Person}}, object, event, idea, process, etc.
+              {{urn_iso_std_iso_14812_3.1.1.6,person,Person}}, object, event, idea, process, etc.
 
 
 
@@ -572,7 +572,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
               concrete or abstract thing that exists, did exist, or can possibly exist, including associations among these things
 
               [example]
-              {{person,Person}}, object, event, idea, process, etc.
+              {{urn_iso_std_iso_14812_3.1.1.6,person,Person}}, object, event, idea, process, etc.
 
 
 
@@ -610,7 +610,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
               concrete or abstract thing that exists, did exist, or can possibly exist, including associations among these things
 
               [example]
-              {{person,Person}}, object, event, idea, process, etc.
+              {{urn_iso_std_iso_14812_3.1.1.6,person,Person}}, object, event, idea, process, etc.
 
 
 
@@ -664,7 +664,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
               concrete or abstract thing that exists, did exist, or can possibly exist, including associations among these things
 
               [example]
-              {{person,Person}}, object, event, idea, process, etc.
+              {{urn_iso_std_iso_14812_3.1.1.6,person,Person}}, object, event, idea, process, etc.
 
 
 
@@ -680,7 +680,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
 
 
 
-              {{entity}} that occupies three-dimensional space
+              {{urn_iso_std_iso_14812_3.1.1.1,entity}} that occupies three-dimensional space
 
 
 
