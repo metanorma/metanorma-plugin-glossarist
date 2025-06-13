@@ -52,6 +52,7 @@ module Metanorma
           @title_depth = { value: 2 }
           @rendered_bibliographies = {}
           @seen_glossarist = []
+          @context_names = []
         end
 
         def process(document, reader)
@@ -130,8 +131,8 @@ module Metanorma
 
         def process_dataset_tag(document, input_lines, liquid_doc, match)
           @seen_glossarist << "x"
-          @context_names = prepare_dataset_contexts(document, match[1])
-
+          @context_names << prepare_dataset_contexts(document, match[1])
+          @context_names.flatten!
           dataset_section = <<~TEMPLATE
             #{prepare_document(document, input_lines)}
           TEMPLATE
@@ -179,8 +180,8 @@ module Metanorma
         def get_context_path(document, key) # rubocop:disable Metrics/MethodLength
           context_path = nil
           # try to get context_path from glossarist-dataset definition
-          if @context_names
-            context_names = @context_names.split(",").map(&:strip)
+          if @context_names && !@context_names.empty?
+            context_names = @context_names.map(&:strip)
             context_path = context_names.find do |context|
               context_name, = context.split("=")
               context_name == key
@@ -231,14 +232,15 @@ module Metanorma
           @seen_glossarist << "x"
           dataset_name, concept_name = match[1].split(",").map(&:strip)
           concept = get_concept(dataset_name, concept_name)
-
-          liquid_doc.add_content(
-            concept_bibliography(concept),
-          )
+          bibliography = concept_bibliography(concept)
+          if bibliography
+            liquid_doc.add_content(bibliography)
+          end
         end
 
         def concept_bibliography(concept) # rubocop:disable Metrics/AbcSize
           sources = concept.data.localizations["eng"].data.sources
+          return nil if sources.nil? || sources.empty?
 
           bibliography = sources.map do |source|
             ref = source.origin.text
@@ -252,7 +254,7 @@ module Metanorma
         end
 
         def prepare_dataset_contexts(document, contexts)
-          context_names = contexts.split(";").map do |context|
+          contexts.split(";").map do |context|
             context_name, file_path = context.split(":").map(&:strip)
             path = relative_file_path(document, file_path)
 
@@ -262,8 +264,6 @@ module Metanorma
 
             "#{context_name}=#{path}"
           end
-
-          context_names.join(",")
         end
 
         def relative_file_path(document, file_path)
