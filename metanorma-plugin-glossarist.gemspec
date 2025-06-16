@@ -25,8 +25,8 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.required_ruby_version = ">= 2.7.0" # rubocop:disable Gemspec/RequiredRubyVersion
-
   spec.add_dependency "asciidoctor", "~> 2.0.0"
   spec.add_dependency "glossarist", "~> 2.3.6"
   spec.add_dependency "liquid", "~> 5"
+  spec.add_dependency "metanorma-utils", "~> 1.10"
 end
