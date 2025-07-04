@@ -6,8 +6,8 @@ git_source(:github) { |repo| "https://github.com/#{repo}" }
 
 gem "metanorma-standoc"
 gem "pry"
-gem "rake", "~> 12.0"
-gem "rspec", "~> 3.0"
+gem "rake", "~> 13.0"
+gem "rspec", "~> 3.6"
 
 gemspec
 
