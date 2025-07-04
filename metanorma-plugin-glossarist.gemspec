@@ -26,7 +26,7 @@ Gem::Specification.new do |spec|
 
   spec.required_ruby_version = ">= 2.7.0" # rubocop:disable Gemspec/RequiredRubyVersion
 
-  spec.add_dependency "asciidoctor", "~> 2.0.0"
+  spec.add_dependency "asciidoctor"
   spec.add_dependency "glossarist", "~> 2.3.7"
-  spec.add_dependency "liquid", "~> 5"
+  spec.add_dependency "liquid"
 end
