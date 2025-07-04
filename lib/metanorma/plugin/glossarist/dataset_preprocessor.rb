@@ -238,7 +238,7 @@ module Metanorma
           end
         end
 
-        def concept_bibliography(concept) # rubocop:disable Metrics/AbcSize
+        def concept_bibliography(concept) # rubocop:disable Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
           sources = concept.data.localizations["eng"].data.sources
           return nil if sources.nil? || sources.empty?
 
@@ -367,12 +367,15 @@ module Metanorma
           result = []
 
           sources.each do |source|
-            if source.origin.text && source.origin.text != ""
+            if source.origin.text &&
+                source.origin.text != "" &&
+                source.origin.locality.type == "clause"
               source_origin_text = source.origin.text
                 .gsub(" ", "_")
                 .gsub("/", "_")
                 .gsub(":", "_")
-              source_content = "#{source_origin_text},#{source.origin.clause}"
+              source_content = "#{source_origin_text}," \
+                               "#{source.origin.locality.reference_from}"
               content = <<~SOURCES
                 [.source]
                 <<#{source_content}>>
