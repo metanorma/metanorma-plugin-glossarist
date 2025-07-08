@@ -115,7 +115,7 @@ module Metanorma
               return collection unless group_filter
 
               collection.select do |concept|
-                concept.data.groups.include?(group_filter)
+                concept.data.groups&.include?(group_filter)
               end
             end
 
