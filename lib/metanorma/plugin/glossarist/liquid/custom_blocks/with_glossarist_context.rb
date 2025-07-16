@@ -130,7 +130,7 @@ module Metanorma
                             end
 
               collection.sort_by do |concept|
-                concept.send(sort_filter.to_sym)
+                concept.send(sort_filter.to_sym).downcase
               end
             end
 
