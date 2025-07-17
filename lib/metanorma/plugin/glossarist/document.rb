@@ -2,6 +2,7 @@
 
 require_relative "liquid/custom_blocks/with_glossarist_context"
 require_relative "liquid/custom_filters/filters"
+require_relative "liquid/multiply_local_file_system"
 
 module Metanorma
   module Plugin
@@ -16,7 +17,7 @@ module Metanorma
 
         def add_content(content, options = {})
           @content << if options[:render]
-                        render_liquid(content)
+                        render_liquid(content, options)
                       else
                         content
                       end
@@ -26,11 +27,13 @@ module Metanorma
           @content.compact.join("\n")
         end
 
-        def render_liquid(file_content)
+        def render_liquid(file_content, options = {}) # rubocop:disable Metrics/AbcSize
+          include_paths = [file_system, options[:template]].compact
           template = ::Liquid::Template
             .parse(file_content, environment: create_liquid_environment)
-
-          template.registers[:file_system] = file_system
+          template.registers[:file_system] = ::Metanorma::Plugin::Glossarist::Liquid::LocalFileSystem.new(
+            include_paths, ["%s.liquid", "_%s.liquid", "_%s.adoc"]
+          )
           rendered_template = template.render(strict_variables: false,
                                               error_mode: :warn)
 

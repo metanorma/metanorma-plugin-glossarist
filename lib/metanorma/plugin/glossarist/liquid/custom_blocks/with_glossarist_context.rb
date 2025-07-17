@@ -14,13 +14,12 @@ module Metanorma
               @contexts = []
               @filters = {}
 
-              contexts, filters = markup.split(";", 2)
+              contexts, filters = markup.strip.split(";", 2)
 
               if filters && !filters.empty?
-                filters.strip.gsub(/^['"]|['"]$/,
-                                   "").split(";").each do |filter|
+                filters = filters.strip.gsub(/^['"]|['"]$/, "").split(";")
+                filters.each do |filter|
                   property, value = filter.split("=")
-
                   @filters[property] = value
                 end
               end

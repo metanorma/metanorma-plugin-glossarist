@@ -83,7 +83,7 @@ Syntax:
 
 [source,adoc]
 ------
-[glossarist,{dataset-path},{filters},{context}]
+[glossarist,{dataset-path},{filter=filters},{template=path/to/template},{context}]
 ----
 // Liquid template
 ----
@@ -96,8 +96,11 @@ Where,
 
 `{context}`:: The context in which the dataset is being used (e.g., `concepts`).
 
-`{filters}`:: (Optional) Filters to apply to the dataset prior to making the
+`{filter=filters}`:: (Optional) Filters to apply to the dataset prior to making the
 `context` available.
+
+`{template=path/to/template}`:: (Optional) The path to a Liquid template folder
+to use for rendering.
 
 [example]
 ======
