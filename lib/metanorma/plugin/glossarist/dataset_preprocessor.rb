@@ -14,8 +14,7 @@ module Metanorma
         GLOSSARIST_DATASET_REGEX = /^:glossarist-dataset:\s*(.*?)$/m.freeze
         GLOSSARIST_IMPORT_REGEX = /^glossarist::import\[(.*?)\]$/m.freeze
         GLOSSARIST_RENDER_REGEX = /^glossarist::render\[(.*?)\]$/m.freeze
-        GLOSSARIST_BLOCK_REGEX = /^\[glossarist,(.+?),(.+?)\]/.freeze
-        GLOSSARIST_FILTER_BLOCK_REGEX = /^\[glossarist,(.+?),(filter=.+?),(.+?)\]/.freeze # rubocop:disable Layout/LineLength
+        GLOSSARIST_BLOCK_REGEX = /^\[glossarist,(.+?),(.+?)\]$/m.freeze
         GLOSSARIST_BIBLIOGRAPHY_REGEX = /^glossarist::render_bibliography\[(.*?)\]$/m.freeze # rubocop:disable Layout/LineLength
         GLOSSARIST_BIBLIOGRAPHY_ENTRY_REGEX = /^glossarist::render_bibliography_entry\[(.*?)\]$/m.freeze # rubocop:disable Layout/LineLength
 
@@ -57,13 +56,7 @@ module Metanorma
 
         def process(document, reader)
           input_lines = reader.lines.to_enum
-
-          file_system = ::Liquid::LocalFileSystem.new(
-            relative_file_path(document, ""),
-          )
-
-          @config[:file_system] = file_system
-
+          @config[:file_system] = relative_file_path(document, "")
           processed_doc = prepare_document(document, input_lines)
           log(document, processed_doc.to_s) unless @seen_glossarist.empty?
           Asciidoctor::PreprocessorReader.new(document,
@@ -115,15 +108,11 @@ module Metanorma
             process_bibliography(liquid_doc, match)
           elsif match = current_line.match(GLOSSARIST_BIBLIOGRAPHY_ENTRY_REGEX)
             process_bibliography_entry(liquid_doc, match)
-          elsif match = current_line.match(GLOSSARIST_FILTER_BLOCK_REGEX)
-            process_glossarist_block(document, liquid_doc, input_lines, match)
-          elsif match = current_line.match(GLOSSARIST_BLOCK_REGEX) # rubocop:disable Lint/DuplicateBranch
+          elsif match = current_line.match(GLOSSARIST_BLOCK_REGEX)
             process_glossarist_block(document, liquid_doc, input_lines, match)
           else
             if /^==+ \S/.match?(current_line)
-              @title_depth[:value] =
-                current_line.sub(/ .*$/,
-                                 "").size
+              @title_depth[:value] = current_line.sub(/ .*$/, "").size
             end
             liquid_doc.add_content(current_line)
           end
@@ -146,9 +135,9 @@ module Metanorma
         def process_glossarist_block(document, liquid_doc, input_lines, match)
           @seen_glossarist << "x"
           end_mark = input_lines.next
-          # path = relative_file_path(document, match[1])
-          glossarist_params = prepare_glossarist_block_params(document, match)
 
+          glossarist_params, template =
+            prepare_glossarist_block_params(document, match)
           glossarist_section = <<~TEMPLATE.strip
             {% with_glossarist_context #{glossarist_params} %}
             #{prepare_document(
@@ -158,23 +147,38 @@ module Metanorma
             {% endwith_glossarist_context %}
           TEMPLATE
 
-          liquid_doc.add_content(
-            glossarist_section,
-            render: true,
-          )
+          options = { render: true }
+          options[:template] = template if template
+
+          liquid_doc.add_content(glossarist_section, options)
         end
 
-        def prepare_glossarist_block_params(document, match)
+        def prepare_glossarist_block_params(document, match) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
           path = get_context_path(document, match[1])
+          matched_arr = match[2].split(",").map(&:strip)
+          # get the last element as context name
+          context_name = matched_arr.last
 
-          if match[2].strip.start_with?("filter")
-            filters = match[2].split("=")[1..-1].join("=").strip
-            context_name = match[3].strip
-            "#{context_name}=#{path};#{filters}"
-          else
-            context_name = match[2].strip
-            "#{context_name}=#{path}"
+          glossarist_block_params = []
+          glossarist_block_params << "#{context_name}=#{path}"
+
+          template = nil
+          if matched_arr.size > 1
+            filters_or_template = matched_arr[0..-2]
+            filters_or_template.each do |item|
+              if item.start_with?("filter=")
+                filters = item.gsub(/^filter=/, "").strip
+                glossarist_block_params << filters
+              elsif item.start_with?("template=")
+                template = relative_file_path(
+                  document,
+                  item.gsub(/^template=/, "").strip,
+                )
+              end
+            end
           end
+
+          [glossarist_block_params.join(";"), template]
         end
 
         def get_context_path(document, key) # rubocop:disable Metrics/MethodLength
