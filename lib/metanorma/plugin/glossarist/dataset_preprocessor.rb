@@ -108,9 +108,9 @@ module Metanorma
           elsif match = current_line.match(GLOSSARIST_IMPORT_REGEX)
             process_import_tag(liquid_doc, match)
           elsif match = current_line.match(GLOSSARIST_BIBLIOGRAPHY_REGEX)
-            process_bibliography(liquid_doc, match)
+            process_bibliography(document, liquid_doc, match)
           elsif match = current_line.match(GLOSSARIST_BIBLIOGRAPHY_ENTRY_REGEX)
-            process_bibliography_entry(liquid_doc, match)
+            process_bibliography_entry(document, liquid_doc, match)
           elsif match = current_line.match(GLOSSARIST_BLOCK_REGEX)
             process_glossarist_block(document, liquid_doc, input_lines, match)
           else
@@ -230,10 +230,15 @@ module Metanorma
           )
         end
 
-        def process_bibliography(liquid_doc, match)
+        def process_bibliography(document, liquid_doc, match) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
           @seen_glossarist << "x"
           dataset_name = match[1].strip
           dataset = @datasets[dataset_name]
+
+          if dataset.nil? || @datasets.empty?
+            path = relative_file_path(document, dataset_name)
+            dataset = load_dataset_from_path(path)
+          end
 
           liquid_doc.add_content(
             dataset.map do |concept|
@@ -242,11 +247,12 @@ module Metanorma
           )
         end
 
-        def process_bibliography_entry(liquid_doc, match)
+        def process_bibliography_entry(document, liquid_doc, match)
           @seen_glossarist << "x"
           dataset_name, concept_name = match[1].split(",").map(&:strip)
-          concept = get_concept(dataset_name, concept_name)
+          concept = get_concept(dataset_name, concept_name, document)
           bibliography = concept_bibliography(concept)
+
           if bibliography
             liquid_doc.add_content(bibliography)
           end
@@ -271,13 +277,17 @@ module Metanorma
           contexts.split(";").map do |context|
             context_name, file_path = context.split(":").map(&:strip)
             path = relative_file_path(document, file_path)
-
-            dataset = ::Glossarist::ManagedConceptCollection.new
-            dataset.load_from_files(path)
+            dataset = load_dataset_from_path(path)
             @datasets[context_name] = dataset.map(&:to_liquid)
 
             "#{context_name}=#{path}"
           end
+        end
+
+        def load_dataset_from_path(path)
+          dataset = ::Glossarist::ManagedConceptCollection.new
+          dataset.load_from_files(path)
+          dataset
         end
 
         def relative_file_path(document, file_path)
@@ -308,8 +318,15 @@ module Metanorma
           CONCEPT_TEMPLATE
         end
 
-        def get_concept(dataset_name, concept_name)
-          @datasets[dataset_name].find do |c|
+        def get_concept(dataset_name, concept_name, document = nil)
+          dataset = @datasets[dataset_name]
+
+          if document && dataset.nil?
+            path = relative_file_path(document, dataset_name)
+            dataset = load_dataset_from_path(path)
+          end
+
+          dataset.find do |c|
             c.data.localizations["eng"]
               .data.terms[0]
               .designation == concept_name
