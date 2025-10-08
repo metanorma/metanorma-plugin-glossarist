@@ -569,7 +569,9 @@ glossarist::render_bibliography_entry[{dataset-name}, {term}]
 
 Where,
 
-`{dataset-name}`:: The name of the dataset (e.g., `dataset`).
+`{dataset-name}`:: The name of the dataset (e.g., `dataset`) or the path to the
+Glossarist dataset relative to the master document
+(e.g., `./path/to/glossarist-dataset`).
 
 `{term}`:: The term to render the bibliography for (e.g., `foo`).
 
@@ -617,7 +619,9 @@ glossarist::render_bibliography[{dataset-name}]
 
 Where,
 
-`{dataset-name}`:: The name of the dataset (e.g., `dataset`).
+`{dataset-name}`:: The name of the dataset (e.g., `dataset`) or the path to the
+Glossarist dataset relative to the master document
+(e.g., `./path/to/glossarist-dataset`).
 
 [example]
 ====

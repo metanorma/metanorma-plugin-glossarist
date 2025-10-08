@@ -740,6 +740,66 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
             .to eq(expected_output)
         end
       end
+
+      context "[render bibliography] by path" do
+        let(:reader) do
+          Asciidoctor::Reader.new <<~TEMPLATE
+            glossarist::render_bibliography[./spec/fixtures/dataset-glossarist-v2]
+          TEMPLATE
+        end
+
+        let(:expected_output) do
+          <<~OUTPUT.strip
+            * [[[ISO_TS_14812_2022,ISO/TS 14812:2022]]]
+            * [[[ISO_TS_14812_2023,ISO/TS 14812:2023]]]
+          OUTPUT
+        end
+
+        it "should render correct output" do
+          expect(subject.process(document, reader).source.strip)
+            .to eq(expected_output)
+        end
+      end
+
+      context "[render bibliography entry]" do
+        let(:reader) do
+          Asciidoctor::Reader.new <<~TEMPLATE
+            :glossarist-dataset: dataset1:./spec/fixtures/dataset-glossarist-v2
+
+            glossarist::render_bibliography_entry[dataset1, entity]
+          TEMPLATE
+        end
+
+        let(:expected_output) do
+          <<~OUTPUT.strip
+            * [[[ISO_TS_14812_2022,ISO/TS 14812:2022]]]
+          OUTPUT
+        end
+
+        it "should render correct output" do
+          expect(subject.process(document, reader).source.strip)
+            .to eq(expected_output)
+        end
+      end
+
+      context "[render bibliography entry] by path" do
+        let(:reader) do
+          Asciidoctor::Reader.new <<~TEMPLATE
+            glossarist::render_bibliography_entry[./spec/fixtures/dataset-glossarist-v2, material entity]
+          TEMPLATE
+        end
+
+        let(:expected_output) do
+          <<~OUTPUT.strip
+            * [[[ISO_TS_14812_2022,ISO/TS 14812:2022]]]
+          OUTPUT
+        end
+
+        it "should render correct output" do
+          expect(subject.process(document, reader).source.strip)
+            .to eq(expected_output)
+        end
+      end
     end
 
     context "Invalid concepts" do
