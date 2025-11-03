@@ -29,5 +29,5 @@ Gem::Specification.new do |spec|
   spec.add_dependency "asciidoctor"
   spec.add_dependency "glossarist", "~> 2.3.7"
   spec.add_dependency "liquid"
-  spec.add_dependency "metanorma-utils", "~> 1.10"
+  spec.add_dependency "metanorma-utils", "~> 2.0"
 end
