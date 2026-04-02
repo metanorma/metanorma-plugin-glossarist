@@ -462,7 +462,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
 
             [NOTE]
             ====
-            All material entities have certain characteristics that can be described and therefore this concept is important for ontology purposes.
+            All material entities have certain characteristics that can be described (see <<ISO_11179_1>>) and therefore this concept is important for ontology purposes.
             ====
 
             [.source]
@@ -624,7 +624,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
 
               [NOTE]
               ====
-              All material entities have certain characteristics that can be described and therefore this concept is important for ontology purposes.
+              All material entities have certain characteristics that can be described (see <<ISO_11179_1>>) and therefore this concept is important for ontology purposes.
               ====
 
               [.source]
@@ -658,6 +658,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
 
         let(:expected_output) do
           <<~OUTPUT.strip
+            * [[[ISO_11179_1,ISO 11179 1]]]
             * [[[ISO_TS_14812_2022,ISO/TS 14812:2022]]]
             * [[[ISO_TS_14812_2023,ISO/TS 14812:2023]]]
           OUTPUT
@@ -678,6 +679,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
 
         let(:expected_output) do
           <<~OUTPUT.strip
+            * [[[ISO_11179_1,ISO 11179 1]]]
             * [[[ISO_TS_14812_2022,ISO/TS 14812:2022]]]
             * [[[ISO_TS_14812_2023,ISO/TS 14812:2023]]]
           OUTPUT
@@ -720,6 +722,60 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
         let(:expected_output) do
           <<~OUTPUT.strip
             * [[[ISO_TS_14812_2022,ISO/TS 14812:2022]]]
+            * [[[ISO_11179_1,ISO 11179 1]]]
+          OUTPUT
+        end
+
+        it "should render correct output" do
+          expect(subject.process(document, reader).source.strip)
+            .to eq(expected_output)
+        end
+      end
+
+      context "[render bibliography] includes references from notes" do
+        let(:reader) do
+          Asciidoctor::Reader.new <<~TEMPLATE
+            :glossarist-dataset: dataset1:./spec/fixtures/dataset-glossarist-v2
+
+            glossarist::render_bibliography_entry[dataset1, material entity]
+          TEMPLATE
+        end
+
+        it "should include ISO_11179_1 from note cross-reference" do
+          output = subject.process(document, reader).source.strip
+          expect(output).to include("ISO_11179_1")
+        end
+      end
+
+      context "[render bibliography] deduplicates source and content references" do
+        let(:reader) do
+          Asciidoctor::Reader.new <<~TEMPLATE
+            :glossarist-dataset: dataset1:./spec/fixtures/dataset-glossarist-v2
+
+            glossarist::render_bibliography[dataset1]
+          TEMPLATE
+        end
+
+        it "should not have duplicate entries" do
+          output = subject.process(document, reader).source.strip
+          lines = output.split("\n")
+          expect(lines.size).to eq(lines.uniq.size)
+        end
+      end
+
+      context "[render bibliography entry] includes content references for single concept" do
+        let(:reader) do
+          Asciidoctor::Reader.new <<~TEMPLATE
+            :glossarist-dataset: dataset1:./spec/fixtures/dataset-glossarist-v2
+
+            glossarist::render_bibliography_entry[dataset1, material entity]
+          TEMPLATE
+        end
+
+        let(:expected_output) do
+          <<~OUTPUT.strip
+            * [[[ISO_TS_14812_2022,ISO/TS 14812:2022]]]
+            * [[[ISO_11179_1,ISO 11179 1]]]
           OUTPUT
         end
 
