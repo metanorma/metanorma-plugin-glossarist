@@ -1,7 +1,7 @@
 module Metanorma
   module Plugin
     module Glossarist
-      VERSION = "0.2.11".freeze
+      VERSION = "0.3.0".freeze
     end
   end
 end
