@@ -1,21 +1,19 @@
-Encoding.default_external = Encoding::UTF_8
-Encoding.default_internal = Encoding::UTF_8
+# frozen_string_literal: true
 
 source "https://rubygems.org"
 git_source(:github) { |repo| "https://github.com/#{repo}" }
 
-gem "metanorma-standoc", github: "metanorma/metanorma-standoc"
-gem "isodoc", github: "metanorma/isodoc"
-gem "metanorma", github: "metanorma/metanorma"
-
-gem "pry"
-gem "rake", "~> 13.0"
-gem "rspec", "~> 3.6"
+gem "glossarist"
+gem "metanorma", github: "metanorma/metanorma", branch: "main"
+gem "metanorma-plugin-lutaml", github: "metanorma/metanorma-plugin-lutaml",
+                               branch: "main"
+gem "metanorma-standoc", github: "metanorma/metanorma-standoc", branch: "main"
+gem "ogc-gml", "~> 1.1"
+gem "rake"
+gem "rspec"
+gem "rubocop"
+gem "rubocop-performance"
+gem "rubocop-rake"
+gem "rubocop-rspec"
 
 gemspec
-
-begin
-  eval_gemfile("Gemfile.devel")
-rescue StandardError
-  nil
-end

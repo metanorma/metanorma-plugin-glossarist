@@ -1,3 +1,0 @@
-gem "lutaml", git: "https://github.com/lutaml/lutaml", branch: "fix/expressir-2.2.x"
-
-

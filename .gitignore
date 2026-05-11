@@ -12,3 +12,4 @@
 Gemfile.lock
 
 .rubocop-https--*
+*.log.txt
