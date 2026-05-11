@@ -70,7 +70,7 @@ module Metanorma
         def extract_start_with(path, value, start_with)
           return [path, value] unless start_with
 
-          match = path.match(/^(.+)\.start_with\(([^)]+)\)$/)
+          match = path.match(/^([^.]+(?:\.[^.]+)*)\.start_with\(([^)]+)\)$/)
           return [path, value] unless match
 
           [match[1], match[2]]
