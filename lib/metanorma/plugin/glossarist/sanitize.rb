@@ -4,7 +4,7 @@ module Metanorma
   module Plugin
     module Glossarist
       module Sanitize
-        REF_REGEX = /{{([^,]{1,500}),([^\}]{1,500})}}(.*?)$/s
+        REF_REGEX = /{{([^,{}]+),([^}]+?)}}(.*)$/s
 
         def self.references(str)
           return str unless str&.match?(REF_REGEX)
