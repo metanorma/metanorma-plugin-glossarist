@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Metanorma
   module Plugin
     module Glossarist
@@ -14,7 +16,8 @@ module Metanorma
             full_path = full_path(template_path)
 
             unless File.exist?(full_path)
-              raise FileSystemError, "No such template '#{template_path}'"
+              raise FileSystemError,
+                    "No such template '#{template_path}'"
             end
 
             File.read(full_path)
@@ -52,8 +55,8 @@ module Metanorma
 
             if result_path.nil?
               raise ::Liquid::FileSystemError,
-                    "No documents in template path: " \
-                    " #{File.expand_path(template_path)}"
+                    "No documents in template path:  " \
+                    "#{File.expand_path(template_path)}"
             end
 
             unless roots.any? do |root|

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_relative "lib/metanorma/plugin/glossarist/version"
 
 Gem::Specification.new do |spec|
@@ -12,9 +14,6 @@ Gem::Specification.new do |spec|
   spec.homepage      = "https://github.com/metanorma/metanorma-plugin-glossarist"
   spec.license       = "BSD-2-Clause"
 
-  # Specify which files should be added to the gem when it is released.
-  # The `git ls-files -z` loads the files in the RubyGem that have been added
-  # into git.
   spec.files         = Dir.chdir(File.expand_path(__dir__)) do
     `git ls-files -z`.split("\x0").reject do |f|
       f.match(%r{^(test|spec|features)/})
@@ -24,10 +23,11 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.required_ruby_version = ">= 3.1.0" # rubocop:disable Gemspec/RequiredRubyVersion
+  spec.required_ruby_version = ">= 3.1.0"
 
   spec.add_dependency "asciidoctor"
-  spec.add_dependency "glossarist", "~> 2.4.0"
+  spec.add_dependency "glossarist", "~> 2.6.0"
   spec.add_dependency "liquid"
-  spec.add_dependency "metanorma-utils", "~> 2.0"
+  spec.add_dependency "metanorma-utils"
+  spec.metadata["rubygems_mfa_required"] = "true"
 end
