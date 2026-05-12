@@ -286,11 +286,25 @@ which concepts are loaded into the block.
 
 `sort_by=<field name>`::: Sorts the dataset in ascending order of the given
 field values. The field `term` is a special case, where it sorts according to
-the `default_designation` of the term.
+the `default_designation` of the term. Nested attribute paths are supported
+using dot notation (e.g., `data.id`) and bracket notation for hash/array access
+(e.g., `data.localizations['eng'].data.terms[0].designation`).
+Nested path sorts use natural ordering so that version-like identifiers
+(e.g., `3.1.1.10`) sort correctly after `3.1.1.2`. Concepts missing the
+specified path are sorted last.
 +
+--
 [example]
 `sort_by=term` will sort concepts in ascending order based on the
 default term (which is the first English designation, at `data.localizations['eng'].data.terms[0].designation`).
+
+[example]
+`sort_by=data.id` will sort concepts by their identifier.
+
+[example]
+`sort_by=data.localizations['eng'].data.terms[0].designation` will sort concepts
+alphabetically by the English designation.
+--
 
 `lang=<language code>`::: Loads concepts in the specified language.
 +
