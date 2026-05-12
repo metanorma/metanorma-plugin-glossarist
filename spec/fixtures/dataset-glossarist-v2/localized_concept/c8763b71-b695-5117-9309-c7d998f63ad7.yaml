@@ -8,11 +8,14 @@ data:
       space"
   notes:
   - content: All material entities have certain characteristics that can be described
-      (see <<ISO_11179_1>>) and therefore this concept is important for ontology purposes.
+      (see <<ISO_11179-1>>) and therefore this concept is important for ontology purposes.
   examples: []
   language_code: eng
   entry_status: valid
   sources:
+  - type: authoritative
+    origin:
+      ref: ISO 11179-1
   - type: authoritative
     origin:
       ref: ISO/TS 14812:2022

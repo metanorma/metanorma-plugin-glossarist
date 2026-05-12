@@ -8,51 +8,83 @@ RSpec.describe Metanorma::Plugin::Glossarist::BibliographyRenderer do
   end
 
   let(:entity_concept) do
-    collection.find do |c|
-      c.default_designation == "entity"
-    end
+    collection.find { |c| c.default_designation == "entity" }
   end
+
   let(:material_entity) do
-    collection.find do |c|
-      c.default_designation == "material entity"
-    end
+    collection.find { |c| c.default_designation == "material entity" }
   end
 
   describe "#render_entry" do
-    it "renders a bibliography entry for a concept" do
+    it "renders bibliography entries from concept sources" do
       renderer = described_class.new
       entry = renderer.render_entry(entity_concept)
       expect(entry).to eq("* [[[ISO_TS_14812_2022,ISO/TS 14812:2022]]]")
     end
 
-    it "returns nil for concept with no source" do
-      concept = collection.find do |c|
-        c.default_designation == "biological entity"
-      end
-      # biological entity source may or may not have origin text
+    it "renders all sources for a concept with multiple sources" do
       renderer = described_class.new
-      entry = renderer.render_entry(concept)
-      # Just verify it doesn't raise
-      expect(entry).to(satisfy { |v| v.nil? || v.is_a?(String) })
+      entry = renderer.render_entry(material_entity)
+      lines = entry.split("\n")
+      expect(lines).to include(
+        "* [[[ISO_11179-1,ISO 11179-1]]]",
+      )
+      expect(lines).to include(
+        "* [[[ISO_TS_14812_2022,ISO/TS 14812:2022]]]",
+      )
+    end
+
+    it "returns sorted entries for a single concept" do
+      renderer = described_class.new
+      entry = renderer.render_entry(material_entity)
+      expect(entry).to eq(<<~OUTPUT.strip)
+        * [[[ISO_11179-1,ISO 11179-1]]]
+        * [[[ISO_TS_14812_2022,ISO/TS 14812:2022]]]
+      OUTPUT
+    end
+
+    it "returns nil for concept with no localization" do
+      concept = collection.find do |c|
+        c.default_designation == "entity"
+      end
+      renderer = described_class.new
+      expect(renderer.render_entry(concept, lang: "xxx")).to be_nil
+    end
+
+    it "deduplicates entries by anchor" do
+      renderer = described_class.new
+      entry = renderer.render_entry(material_entity)
+      anchors = entry.scan(/\[\[\[([^\],]+)/).map(&:first)
+      expect(anchors.uniq).to eq(anchors)
+    end
+
+    it "warns about unresolved xrefs in content" do
+      renderer = described_class.new
+      # material entity note has <<ISO_11179_1>> which IS a source — no warning
+      expect { renderer.render_entry(material_entity) }.not_to output.to_stderr
     end
   end
 
   describe "#render_all" do
-    it "renders all bibliography entries sorted" do
+    it "renders all entries sorted from all concept sources" do
       renderer = described_class.new
       output = renderer.render_all(collection.to_a)
       lines = output.split("\n")
-      expect(lines.length).to eq(2)
-      expect(lines[0]).to eq("* [[[ISO_TS_14812_2022,ISO/TS 14812:2022]]]")
-      expect(lines[1]).to eq("* [[[ISO_TS_14812_2023,ISO/TS 14812:2023]]]")
+      expect(lines).to eq(
+        [
+          "* [[[ISO_11179-1,ISO 11179-1]]]",
+          "* [[[ISO_TS_14812_2022,ISO/TS 14812:2022]]]",
+          "* [[[ISO_TS_14812_2023,ISO/TS 14812:2023]]]",
+        ],
+      )
     end
 
-    it "does not duplicate entries" do
+    it "does not duplicate entries across concepts" do
       renderer = described_class.new
       concepts = collection.to_a + collection.to_a
       output = renderer.render_all(concepts)
       lines = output.split("\n")
-      expect(lines.length).to eq(2)
+      expect(lines.uniq).to eq(lines)
     end
   end
 end
