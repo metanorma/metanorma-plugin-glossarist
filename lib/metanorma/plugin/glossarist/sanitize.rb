@@ -5,7 +5,7 @@ module Metanorma
     module Glossarist
       module Sanitize
         REF_REGEX = /{{([^,{}]+),([^}]+?)}}(.*)$/s
-        XREF_REGEX = /<<([^,>\n]+?)(?:,[^>\n]*)?>>/
+        XREF_REGEX = /<<((?>[^,>\n]+))(?:,[^>\n]*)?>>/
 
         def self.references(str)
           return str unless str&.match?(REF_REGEX)
