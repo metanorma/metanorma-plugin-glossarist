@@ -40,12 +40,28 @@ module Metanorma
         end
 
         def sort(collection)
-          case @filters["sort_by"]
+          field = @filters["sort_by"]
+          return collection unless field
+
+          case field
           when "term", "default_designation"
-            collection.sort_by { |c| c.default_designation.downcase }
+            collection.sort_by { |c| c.default_designation.to_s.downcase }
           else
-            collection
+            parts = parse_path(field)
+            collection.sort_by { |c| sort_key(c, parts) }
           end
+        end
+
+        def sort_key(concept, parts)
+          hash = ConceptSerializer.new(concept).to_h
+          value = dig_path(hash, parts)
+          value.nil? ? SORT_LAST : natural_sort_key(value.to_s)
+        end
+
+        SORT_LAST = ["￿"].freeze
+
+        def natural_sort_key(str)
+          str.scan(/(\d+)|(\D+)/).map { |num, txt| num ? num.to_i : txt.downcase }
         end
 
         def filter_by_field(collection)

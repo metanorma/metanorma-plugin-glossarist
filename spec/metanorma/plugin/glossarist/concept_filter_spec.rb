@@ -50,6 +50,40 @@ RSpec.describe Metanorma::Plugin::Glossarist::ConceptFilter do
         designations = result.map(&:default_designation)
         expect(designations).to eq(designations.sort_by(&:downcase))
       end
+
+      it "sorts by default_designation alias" do
+        filter = described_class.new({ "sort_by" => "default_designation" })
+        result = filter.apply(all_concepts)
+        designations = result.map(&:default_designation)
+        expect(designations).to eq(designations.sort_by(&:downcase))
+      end
+
+      it "sorts by simple nested path (data.id)" do
+        filter = described_class.new({ "sort_by" => "data.id" })
+        result = filter.apply(all_concepts)
+        ids = result.map { |c| c.data.id }
+        expect(ids).to eq(["3.1.1.1", "3.1.1.3", "3.1.1.5", "3.1.1.6"])
+      end
+
+      it "sorts by deeply nested path (English designation)" do
+        filter = described_class.new({ "sort_by" => "data.localizations['eng'].data.terms[0].designation" })
+        result = filter.apply(all_concepts)
+        designations = result.map(&:default_designation)
+        expect(designations).to eq(designations.sort_by(&:downcase))
+      end
+
+      it "sorts nil values last when path is missing for some concepts" do
+        filter = described_class.new({ "lang" => "deu", "sort_by" => "data.localizations['deu'].data.terms[0].designation" })
+        result = filter.apply(all_concepts)
+        expect(result.length).to eq(1)
+        expect(result.first.default_designation).to eq("person")
+      end
+
+      it "returns collection unchanged when sort field is nil" do
+        filter = described_class.new({ "sort_by" => nil })
+        result = filter.apply(all_concepts)
+        expect(result.length).to eq(all_concepts.length)
+      end
     end
 
     describe "field filter" do
@@ -84,6 +118,20 @@ RSpec.describe Metanorma::Plugin::Glossarist::ConceptFilter do
         result = filter.apply(all_concepts)
         designations = result.map(&:default_designation)
         expect(designations).to eq(["entity", "material entity"])
+      end
+
+      it "applies group and nested sort_by together" do
+        filter = described_class.new({ "group" => "bar", "sort_by" => "data.id" })
+        result = filter.apply(all_concepts)
+        ids = result.map { |c| c.data.id }
+        expect(ids).to eq(["3.1.1.5", "3.1.1.6"])
+      end
+
+      it "applies lang and nested sort_by together" do
+        filter = described_class.new({ "lang" => "deu", "sort_by" => "data.id" })
+        result = filter.apply(all_concepts)
+        ids = result.map { |c| c.data.id }
+        expect(ids).to eq(["3.1.1.6"])
       end
     end
   end

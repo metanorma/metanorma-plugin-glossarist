@@ -229,6 +229,134 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
             end
           end
 
+          describe "filter='sort_by=data.id' (nested attribute sorting)" do
+            let(:reader) do
+              Asciidoctor::Reader.new <<~TEMPLATE
+                some text before glossarist block
+
+                === Section 1
+                [glossarist,./spec/fixtures/dataset-glossarist-v2,filter='sort_by=data.id',concepts]
+                ----
+                {% for concept in concepts %}
+                ==== {{ concept.data.id }}
+                {% endfor %}
+                ----
+
+                some text after glossarist block
+              TEMPLATE
+            end
+
+            let(:expected_output) do
+              <<~OUTPUT.strip
+                some text before glossarist block
+
+                === Section 1
+
+
+                ==== 3.1.1.1
+
+                ==== 3.1.1.3
+
+                ==== 3.1.1.5
+
+                ==== 3.1.1.6
+
+
+
+                some text after glossarist block
+              OUTPUT
+            end
+
+            it "renders correct output" do
+              expect(subject.process(document, reader).source)
+                .to eq(expected_output)
+            end
+          end
+
+          describe "filter='sort_by=data.localizations[\"eng\"].data.terms[0]" \
+                   ".designation' (deeply nested sorting)" do
+            let(:reader) do
+              Asciidoctor::Reader.new <<~TEMPLATE
+                some text before glossarist block
+
+                === Section 1
+                [glossarist,./spec/fixtures/dataset-glossarist-v2,filter='sort_by=data.localizations["eng"].data.terms[0].designation',concepts]
+                ----
+                {% for concept in concepts %}
+                ==== {{ concept.data.localizations['eng'].data.terms[0].designation }}
+                {% endfor %}
+                ----
+
+                some text after glossarist block
+              TEMPLATE
+            end
+
+            let(:expected_output) do
+              <<~OUTPUT.strip
+                some text before glossarist block
+
+                === Section 1
+
+
+                ==== biological entity
+
+                ==== entity
+
+                ==== material entity
+
+                ==== person
+
+
+
+                some text after glossarist block
+              OUTPUT
+            end
+
+            it "renders correct output" do
+              expect(subject.process(document, reader).source)
+                .to eq(expected_output)
+            end
+          end
+
+          describe "filter='lang=deu;sort_by=data.localizations[\"deu\"].data" \
+                   ".terms[0].designation' (nested sort with lang filter)" do
+            let(:reader) do
+              Asciidoctor::Reader.new <<~TEMPLATE
+                some text before glossarist block
+
+                === Section 1
+                [glossarist,./spec/fixtures/dataset-glossarist-v2,filter='lang=deu;sort_by=data.localizations["deu"].data.terms[0].designation',concepts]
+                ----
+                {% for concept in concepts %}
+                ==== {{ concept.data.localizations['deu'].data.terms[0].designation }}
+                {% endfor %}
+                ----
+
+                some text after glossarist block
+              TEMPLATE
+            end
+
+            let(:expected_output) do
+              <<~OUTPUT.strip
+                some text before glossarist block
+
+                === Section 1
+
+
+                ==== persoon
+
+
+
+                some text after glossarist block
+              OUTPUT
+            end
+
+            it "renders correct output" do
+              expect(subject.process(document, reader).source)
+                .to eq(expected_output)
+            end
+          end
+
           describe "filter='group=foo;sort_by=term'" do
             let(:reader) do
               Asciidoctor::Reader.new <<~TEMPLATE
