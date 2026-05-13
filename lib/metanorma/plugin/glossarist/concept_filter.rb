@@ -4,7 +4,8 @@ module Metanorma
   module Plugin
     module Glossarist
       class ConceptFilter
-        COLLECTION_FILTERS = %w[lang group sort_by].freeze
+        COLLECTION_FILTERS = %w[lang domain group sort_by].freeze
+        SORT_LAST = ["￿"].freeze
 
         def initialize(filters)
           @filters = filters || {}
@@ -13,7 +14,9 @@ module Metanorma
         def apply(collection)
           result = collection
           result = filter_by_lang(result) if @filters.key?("lang")
-          result = filter_by_group(result) if @filters.key?("group")
+          if @filters.key?("domain") || @filters.key?("group")
+            result = filter_by_domain(result)
+          end
           result = filter_by_field(result) if field_filter?
           result = sort(result) if @filters.key?("sort_by")
           result
@@ -34,9 +37,11 @@ module Metanorma
           collection.reject { |c| c.localization(lang).nil? }
         end
 
-        def filter_by_group(collection)
-          group = @filters["group"]
-          collection.select { |c| c.data.groups&.include?(group) }
+        def filter_by_domain(collection)
+          domain = @filters["domain"] || @filters["group"]
+          collection.select do |c|
+            c.data.domains&.any? { |d| d.concept_id == domain }
+          end
         end
 
         def sort(collection)
@@ -58,10 +63,9 @@ module Metanorma
           value.nil? ? SORT_LAST : natural_sort_key(value.to_s)
         end
 
-        SORT_LAST = ["￿"].freeze
-
         def natural_sort_key(str)
-          str.scan(/(\d+)|(\D+)/).map { |num, txt| num ? num.to_i : txt.downcase }
+          str.scan(/(\d+)|(\D+)/)
+            .map { |num, txt| num ? num.to_i : txt.downcase }
         end
 
         def filter_by_field(collection)

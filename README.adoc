@@ -271,7 +271,7 @@ Multiple filters can be applied by separating them with a semicolon `;`.
 ====
 [source,adoc]
 ------
-[glossarist,dataset,filter='group=foo;sort_by=term',concepts]
+[glossarist,dataset,filter='domain=foo;sort_by=term',concepts]
 ----
 ...
 ----
@@ -287,7 +287,7 @@ which concepts are loaded into the block.
 `sort_by=<field name>`::: Sorts the dataset in ascending order of the given
 field values. The field `term` is a special case, where it sorts according to
 the `default_designation` of the term. Nested attribute paths are supported
-using dot notation (e.g., `data.id`) and bracket notation for hash/array access
+using dot notation (e.g., `data.identifier`) and bracket notation for hash/array access
 (e.g., `data.localizations['eng'].data.terms[0].designation`).
 Nested path sorts use natural ordering so that version-like identifiers
 (e.g., `3.1.1.10`) sort correctly after `3.1.1.2`. Concepts missing the
@@ -299,7 +299,7 @@ specified path are sorted last.
 default term (which is the first English designation, at `data.localizations['eng'].data.terms[0].designation`).
 
 [example]
-`sort_by=data.id` will sort concepts by their identifier.
+`sort_by=data.identifier` will sort concepts by their identifier.
 
 [example]
 `sort_by=data.localizations['eng'].data.terms[0].designation` will sort concepts
@@ -311,11 +311,18 @@ alphabetically by the English designation.
 [example]
 `lang=ara` loads all localized concepts of Arabic for all concepts.
 
-`group=<group name>`::: Loads concepts that belong to the specified group. Group is a dataset-specific
-field that can be used to categorize concepts.
+`domain=<domain name>`::: Loads concepts that belong to the specified domain.
+Domains are `ConceptReference` objects (with `concept_id` and `ref_type: "domain"`)
+that categorize concepts into subject areas.
 +
 [example]
-`group=foo` will only load concepts that have a group named `foo`.
+`domain=foo` will only load concepts that have a domain with `concept_id` "foo".
+
+`group=<group name>`::: Legacy alias for `domain`. Loads concepts that belong to
+the specified domain. Provided for backward compatibility with existing documents.
++
+[example]
+`group=foo` will only load concepts that have a domain with `concept_id` "foo".
 
 Field filters:: These filters are applied to individual fields of the concepts
 and affect which concepts are included in the block based on the values of those
@@ -724,14 +731,14 @@ System for identifying position in the real world
 ====
 
 [example]
-.Applying sorting and filtering by group
+.Applying sorting and filtering by domain
 ====
-Using the same dataset as above, but with sorting and filtering by the "terminology" group:
+Using the same dataset as above, but with sorting and filtering by the "terminology" domain:
 
 [source,asciidoc]
 ------
 === Terms and definitions
-[glossarist, /path/to/glossarist-dataset, filter='group=terminology;sort_by=term', dataset]
+[glossarist, /path/to/glossarist-dataset, filter='domain=terminology;sort_by=term', dataset]
 ----
 {%- for concept in dataset -%}
 ==== {{ concept.data.localizations['eng'].data.terms[0].designation }}
@@ -761,7 +768,7 @@ Using the same dataset, but filtering for terms related to addressing:
 [source,asciidoc]
 ------
 === Terms and definitions
-[glossarist, /path/to/glossarist-dataset, filter='group=addressing', dataset]
+[glossarist, /path/to/glossarist-dataset, filter='domain=addressing', dataset]
 ----
 {%- for concept in dataset -%}
 ==== {{ concept.data.localizations['eng'].data.terms[0].designation }}

@@ -32,14 +32,21 @@ RSpec.describe Metanorma::Plugin::Glossarist::ConceptFilter do
       end
     end
 
-    describe "group filter" do
-      it "filters by group" do
-        filter = described_class.new({ "group" => "foo" })
+    describe "domain filter" do
+      it "filters by domain" do
+        filter = described_class.new({ "domain" => "foo" })
         result = filter.apply(all_concepts)
         designations = result.map(&:default_designation)
         expect(designations).to include("entity")
         expect(designations).to include("material entity")
         expect(designations).not_to include("biological entity")
+      end
+
+      it "backward-compatible: 'group' alias still works" do
+        filter = described_class.new({ "group" => "foo" })
+        result = filter.apply(all_concepts)
+        designations = result.map(&:default_designation)
+        expect(designations).to include("entity")
       end
     end
 
@@ -58,8 +65,8 @@ RSpec.describe Metanorma::Plugin::Glossarist::ConceptFilter do
         expect(designations).to eq(designations.sort_by(&:downcase))
       end
 
-      it "sorts by simple nested path (data.id)" do
-        filter = described_class.new({ "sort_by" => "data.id" })
+      it "sorts by simple nested path (data.identifier)" do
+        filter = described_class.new({ "sort_by" => "data.identifier" })
         result = filter.apply(all_concepts)
         ids = result.map { |c| c.data.id }
         expect(ids).to eq(["3.1.1.1", "3.1.1.3", "3.1.1.5", "3.1.1.6"])
@@ -113,22 +120,22 @@ RSpec.describe Metanorma::Plugin::Glossarist::ConceptFilter do
         expect(designations.length).to eq(all_concepts.length)
       end
 
-      it "applies group and sort_by together" do
-        filter = described_class.new({ "group" => "foo", "sort_by" => "term" })
+      it "applies domain and sort_by together" do
+        filter = described_class.new({ "domain" => "foo", "sort_by" => "term" })
         result = filter.apply(all_concepts)
         designations = result.map(&:default_designation)
         expect(designations).to eq(["entity", "material entity"])
       end
 
-      it "applies group and nested sort_by together" do
-        filter = described_class.new({ "group" => "bar", "sort_by" => "data.id" })
+      it "applies domain and nested sort_by together" do
+        filter = described_class.new({ "domain" => "bar", "sort_by" => "data.identifier" })
         result = filter.apply(all_concepts)
         ids = result.map { |c| c.data.id }
         expect(ids).to eq(["3.1.1.5", "3.1.1.6"])
       end
 
       it "applies lang and nested sort_by together" do
-        filter = described_class.new({ "lang" => "deu", "sort_by" => "data.id" })
+        filter = described_class.new({ "lang" => "deu", "sort_by" => "data.identifier" })
         result = filter.apply(all_concepts)
         ids = result.map { |c| c.data.id }
         expect(ids).to eq(["3.1.1.6"])

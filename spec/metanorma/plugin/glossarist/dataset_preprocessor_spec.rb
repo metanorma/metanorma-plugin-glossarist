@@ -229,16 +229,17 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
             end
           end
 
-          describe "filter='sort_by=data.id' (nested attribute sorting)" do
+          describe "filter='sort_by=data.identifier' " \
+                   "(nested attribute sorting)" do
             let(:reader) do
               Asciidoctor::Reader.new <<~TEMPLATE
                 some text before glossarist block
 
                 === Section 1
-                [glossarist,./spec/fixtures/dataset-glossarist-v2,filter='sort_by=data.id',concepts]
+                [glossarist,./spec/fixtures/dataset-glossarist-v2,filter='sort_by=data.identifier',concepts]
                 ----
                 {% for concept in concepts %}
-                ==== {{ concept.data.id }}
+                ==== {{ concept.data.identifier }}
                 {% endfor %}
                 ----
 

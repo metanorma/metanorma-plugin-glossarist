@@ -9,7 +9,7 @@
 
 # rspec failure tracking
 .rspec_status
-Gemfile.lock
 
 .rubocop-https--*
 *.log.txt
+Gemfile.lock
