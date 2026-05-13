@@ -3,7 +3,6 @@
 source "https://rubygems.org"
 git_source(:github) { |repo| "https://github.com/#{repo}" }
 
-gem "glossarist"
 gem "metanorma", github: "metanorma/metanorma", branch: "main"
 gem "metanorma-plugin-lutaml", github: "metanorma/metanorma-plugin-lutaml",
                                branch: "main"

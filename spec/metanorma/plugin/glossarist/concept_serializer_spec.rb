@@ -22,7 +22,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::ConceptSerializer do
     end
 
     it "includes concept id" do
-      expect(subject["data"]["id"]).to eq("3.1.1.1")
+      expect(subject["data"]["identifier"]).to eq("3.1.1.1")
     end
 
     it "includes localizations" do
@@ -52,11 +52,13 @@ RSpec.describe Metanorma::Plugin::Glossarist::ConceptSerializer do
       expect(eng["data"]["sources"]).to be_a(Array)
     end
 
-    it "includes groups when present" do
-      entity_with_group = collection.find { |c| c.data.groups&.include?("foo") }
-      if entity_with_group
-        hash = described_class.new(entity_with_group).to_h
-        expect(hash["data"]["groups"]).to include("foo")
+    it "includes domains when present" do
+      entity_with_domain = collection.find { |c| c.data.domains&.any? { |d| d.concept_id == "foo" } }
+      if entity_with_domain
+        hash = described_class.new(entity_with_domain).to_h
+        expect(hash["data"]["domains"]).to include(
+          include("concept_id" => "foo", "ref_type" => "domain"),
+        )
       end
     end
   end
