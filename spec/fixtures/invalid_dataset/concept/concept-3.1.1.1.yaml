@@ -3,8 +3,9 @@ data:
   identifier: 3.1.1.5
   localized_concepts:
     eng: lc3
-  groups:
-  - bar
+  domains:
+  - concept_id: bar
+    ref_type: domain
 
   [.source]
   <<ISO/TS 21308-4:2007>>
