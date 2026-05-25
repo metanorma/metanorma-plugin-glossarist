@@ -3,6 +3,7 @@
 require "metanorma/plugin/glossarist/version"
 require "metanorma-utils"
 require "metanorma/plugin/glossarist/sanitize"
+require "metanorma/plugin/glossarist/citation_helper"
 require "metanorma/plugin/glossarist/concept_serializer"
 require "metanorma/plugin/glossarist/concept_renderer"
 require "metanorma/plugin/glossarist/bibliography_renderer"

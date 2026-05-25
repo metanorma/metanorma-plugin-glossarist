@@ -4,6 +4,7 @@ module Metanorma
   module Plugin
     module Glossarist
       class ConceptRenderer
+        include CitationHelper
         TERM_TYPES = %w[preferred admitted deprecated].freeze
 
         def initialize(concept, depth:, anchor_prefix: nil)
@@ -76,12 +77,13 @@ module Metanorma
 
         def sources_section
           sources = eng_l10n.sources.filter_map do |source|
-            next if source.origin&.text.nil? || source.origin.text.empty?
+            ref = citation_ref_label(source.origin)
+            next if ref.nil? || ref.empty?
             next unless source.origin.locality&.type == "clause"
 
-            ref = source.origin.text.gsub(%r{[ /:]}, "_")
+            anchor = ref.gsub(%r{[ /:]}, "_")
             clause = source.origin.locality.reference_from
-            "[.source]\n<<#{ref},#{clause}>>"
+            "[.source]\n<<#{anchor},#{clause}>>"
           end
           sources.empty? ? nil : sources.join("\n")
         end

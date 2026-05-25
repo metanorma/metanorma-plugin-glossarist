@@ -4,6 +4,8 @@ module Metanorma
   module Plugin
     module Glossarist
       class BibliographyRenderer
+        include CitationHelper
+
         def initialize
           @rendered = {}
         end
@@ -29,7 +31,7 @@ module Metanorma
           return [] if sources.nil? || sources.empty?
 
           sources.filter_map do |source|
-            ref = source.origin&.text
+            ref = citation_ref_label(source.origin)
             next if ref.nil? || ref.empty?
             next if @rendered.key?(ref)
 
