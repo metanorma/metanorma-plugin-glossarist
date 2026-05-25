@@ -13,6 +13,9 @@ data:
   sources:
   - type: authoritative
     origin:
-      ref: ISO/TS 14812:2023
-      clause: 3.1.1.5
+      ref:
+        source: ISO/TS 14812:2023
+      locality:
+        type: clause
+        reference_from: 3.1.1.5
       link: https://www.iso.org/standard/79779.html
