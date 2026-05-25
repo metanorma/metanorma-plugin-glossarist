@@ -4,5 +4,6 @@ data:
   localized_concepts:
     eng: e797ce71-7aa5-5ac4-97be-9212be802765
     deu: aa48658e-f44a-551d-a60e-d0c620ef6328
-  groups:
-  - bar
+  domains:
+  - concept_id: bar
+    ref_type: domain

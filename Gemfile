@@ -15,4 +15,7 @@ gem "rubocop-performance"
 gem "rubocop-rake"
 gem "rubocop-rspec"
 
+# TODO: remove once glossarist 2.7.0 is released with Citation#label
+gem "glossarist", github: "glossarist/glossarist-ruby", branch: "main"
+
 gemspec
