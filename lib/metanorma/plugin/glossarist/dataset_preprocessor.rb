@@ -4,14 +4,6 @@ require "asciidoctor"
 require "asciidoctor/reader"
 require "glossarist"
 
-require_relative "sanitize"
-require_relative "concept_renderer"
-require_relative "bibliography_renderer"
-require_relative "concept_serializer"
-require_relative "document"
-require_relative "liquid/custom_filters/filters"
-require_relative "liquid/custom_blocks/with_glossarist_context"
-
 module Metanorma
   module Plugin
     module Glossarist
@@ -23,12 +15,16 @@ module Metanorma
         BIBLIOGRAPHY_REGEX = /^glossarist::render_bibliography\[(.*?)\]$/m
         BIBLIOGRAPHY_ENTRY_REGEX = /^glossarist::render_bibliography_entry\[(.*?)\]$/m
 
+        BIB_ANCHOR_REGEX = /^\*\s*\[\[\[([^,]+)/
+
         def initialize(config = {})
           super
           @config = config
           @datasets = {}
+          @rendered_concepts = []
           @title_depth = 2
-          @bibliography_renderer = BibliographyRenderer.new
+          @existing_bib_anchors = []
+          @bibliography_data = {}
           @seen_glossarist = false
           @context_names = []
         end
@@ -87,6 +83,9 @@ module Metanorma
             if /^==+ \S/.match?(current_line)
               @title_depth = current_line.sub(/ .*$/,
                                               "").size
+            end
+            if (match = current_line.match(BIB_ANCHOR_REGEX))
+              @existing_bib_anchors << match[1]
             end
             liquid_doc.add_content(current_line)
           end
@@ -160,11 +159,15 @@ module Metanorma
           concept = find_concept(context_name, concept_name)
           return unless concept
 
-          renderer = ConceptRenderer.new(concept,
-                                         depth: @title_depth,
-                                         anchor_prefix: options["anchor-prefix"])
-          liquid_doc.add_content(renderer.render)
+          @rendered_concepts << concept
+          renderer = TemplateRenderer.new(file_system: @config[:file_system])
+          rendered = renderer.render_concept(concept,
+                                            depth: @title_depth,
+                                            anchor_prefix: options["anchor-prefix"])
+          liquid_doc.add_content("\n#{rendered}")
         end
+
+        RENDER_OPTIONS = %w[anchor-prefix].freeze
 
         def process_import_tag(liquid_doc, match)
           @seen_glossarist = true
@@ -174,26 +177,28 @@ module Metanorma
           dataset = @datasets[context_name.strip]
           return unless dataset
 
-          rendered = dataset.filter_map do |concept|
-            designation = concept.default_designation
-            next unless designation
-
-            renderer = ConceptRenderer.new(concept,
-                                           depth: @title_depth,
-                                           anchor_prefix: options["anchor-prefix"])
-            renderer.render
-          end.join("\n\n")
-
-          liquid_doc.add_content(rendered)
+          filter_options = options.reject { |k, _| RENDER_OPTIONS.include?(k) }
+          concepts = ConceptFilter.new(filter_options).apply(dataset)
+          concepts = concepts.select { |c| c.default_designation }
+          @rendered_concepts.concat(concepts)
+          renderer = TemplateRenderer.new(file_system: @config[:file_system])
+          rendered = renderer.render_concepts(concepts,
+                                              depth: @title_depth,
+                                              anchor_prefix: options["anchor-prefix"])
+          liquid_doc.add_content("\n#{rendered}")
         end
 
         def process_bibliography(document, liquid_doc, match)
           @seen_glossarist = true
           dataset_name = match[1].strip
-          dataset = resolve_dataset(document, dataset_name)
-          return unless dataset
+          concepts = @rendered_concepts.empty? ? resolve_dataset(document, dataset_name) : @rendered_concepts
+          return unless concepts && !concepts.empty?
 
-          liquid_doc.add_content(@bibliography_renderer.render_all(dataset))
+          renderer = BibliographyRenderer.new(
+            existing_anchors: @existing_bib_anchors,
+            bibliography_data: @bibliography_data,
+          )
+          liquid_doc.add_content(renderer.render_all(concepts))
         end
 
         def process_bibliography_entry(document, liquid_doc, match)
@@ -202,7 +207,11 @@ module Metanorma
           concept = find_concept(dataset_name, concept_name, document)
           return unless concept
 
-          entry = @bibliography_renderer.render_entry(concept)
+          renderer = BibliographyRenderer.new(
+            existing_anchors: @existing_bib_anchors,
+            bibliography_data: @bibliography_data,
+          )
+          entry = renderer.render_entry(concept)
           liquid_doc.add_content(entry) if entry
         end
 
@@ -212,7 +221,20 @@ module Metanorma
             path = relative_file_path(document, file_path)
             dataset = load_dataset(path)
             @datasets[context_name] = dataset.to_a
+            load_bibliography_data(path)
             "#{context_name}=#{path}"
+          end
+        end
+
+        def load_bibliography_data(dataset_path)
+          bib_path = File.join(dataset_path, "bibliography.yaml")
+          return unless File.exist?(bib_path)
+
+          entries = YAML.safe_load(File.read(bib_path), permitted_classes: [Symbol, Date])
+          return unless entries.is_a?(Array)
+
+          @bibliography_data = entries.each_with_object({}) do |entry, hash|
+            hash[entry["id"]] = entry if entry["id"]
           end
         end
 

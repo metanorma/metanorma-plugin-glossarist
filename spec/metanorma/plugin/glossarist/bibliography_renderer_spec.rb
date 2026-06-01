@@ -63,6 +63,40 @@ RSpec.describe Metanorma::Plugin::Glossarist::BibliographyRenderer do
       # material entity note has <<ISO_11179_1>> which IS a source — no warning
       expect { renderer.render_entry(material_entity) }.not_to output.to_stderr
     end
+
+    it "renders IEV termbank entry with proper format" do
+      concept = entity_concept
+      l10n = concept.localization("eng")
+      source = l10n.data.sources.sources.first
+      source.origin.text = "ievtermbank"
+
+      renderer = described_class.new
+      entry = renderer.render_entry(concept)
+      expect(entry).to eq("* [[[ievtermbank,IEV]]], _IEV: Electropedia_")
+    end
+
+    it "skips entries whose anchors are already in existing_anchors" do
+      renderer = described_class.new(existing_anchors: ["ISO_TS_14812_2022"])
+      entry = renderer.render_entry(entity_concept)
+      expect(entry).to be_nil
+    end
+
+    it "skips IEV entry when ievtermbank is in existing_anchors" do
+      concept = entity_concept
+      l10n = concept.localization("eng")
+      source = l10n.data.sources.sources.first
+      source.origin.text = "ievtermbank"
+
+      renderer = described_class.new(existing_anchors: ["ievtermbank"])
+      entry = renderer.render_entry(concept)
+      expect(entry).to be_nil
+    end
+
+    it "allows entries whose anchors are not in existing_anchors" do
+      renderer = described_class.new(existing_anchors: ["something_else"])
+      entry = renderer.render_entry(entity_concept)
+      expect(entry).to eq("* [[[ISO_TS_14812_2022,ISO/TS 14812:2022]]]")
+    end
   end
 
   describe "#render_all" do

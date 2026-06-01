@@ -311,9 +311,19 @@ alphabetically by the English designation.
 [example]
 `lang=ara` loads all localized concepts of Arabic for all concepts.
 
+`tag=<tag name>`::: Loads concepts that carry the specified organizational tag.
+Tags are plain strings on `ManagedConceptData.tags`, used for grouping and
+filtering concepts by section or category (e.g. `tag=general`,
+`tag=time-scale-units`). Unlike `domain=`, tags are not rendered as
+terminological domain annotations.
++
+[example]
+`tag=general` will only load concepts whose `tags` array includes `"general"`.
+
 `domain=<domain name>`::: Loads concepts that belong to the specified domain.
 Domains are `ConceptReference` objects (with `concept_id` and `ref_type: "domain"`)
-that categorize concepts into subject areas.
+that categorize concepts into subject areas, and are rendered as `<domain>`
+elements in the output.
 +
 [example]
 `domain=foo` will only load concepts that have a domain with `concept_id` "foo".

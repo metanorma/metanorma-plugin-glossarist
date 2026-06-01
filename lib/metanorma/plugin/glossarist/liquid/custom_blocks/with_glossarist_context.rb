@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 require "liquid"
-require_relative "../../concept_filter"
-require_relative "../../concept_serializer"
 
 module Metanorma
   module Plugin
@@ -24,7 +22,7 @@ module Metanorma
   end
 end
 
-Liquid::Template.register_tag("with_glossarist_context",
+Liquid::Environment.default.register_tag("with_glossarist_context",
                               Class.new(Liquid::Block) do
                                 def initialize(tag_name, markup, tokens)
                                   super
@@ -49,7 +47,7 @@ Liquid::Template.register_tag("with_glossarist_context",
                                     collection = load_collection(local_context[:file_path].strip)
                                     filtered = Metanorma::Plugin::Glossarist::ConceptFilter.new(@raw_filters).apply(collection)
                                     context[local_context[:name]] = filtered.map do |c|
-                                      Metanorma::Plugin::Glossarist::ConceptSerializer.new(c).to_h
+                                      Metanorma::Plugin::Glossarist::Liquid::ManagedConceptDrop.new(c)
                                     end
                                   end
 

@@ -15,6 +15,12 @@ module Metanorma
             def sanitize_references(str)
               Sanitize.references(str)
             end
+
+            def format_ref(label)
+              return "" if label.nil? || label.strip.empty?
+
+              label.gsub(%r{[ /:]}, "_")
+            end
           end
         end
       end
@@ -22,4 +28,4 @@ module Metanorma
   end
 end
 
-Liquid::Template.register_filter(Metanorma::Plugin::Glossarist::Liquid::CustomFilters::Filters)
+Liquid::Environment.default.register_filter(Metanorma::Plugin::Glossarist::Liquid::CustomFilters::Filters)

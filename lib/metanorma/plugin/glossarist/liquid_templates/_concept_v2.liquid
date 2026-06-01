@@ -1,0 +1,42 @@
+{{ depth_marker }} {{ l10n.data.terms[0].designation }}
+{%- for term in l10n.data.terms offset:1 %}
+{%- if term.normative_status == "preferred" %}
+preferred:[{{ term.designation }}]
+{%- elsif term.normative_status == "admitted" %}
+admitted:[{{ term.designation }}]
+{%- elsif term.normative_status == "deprecated" %}
+deprecated:[{{ term.designation }}]
+{%- else %}
+alt:[{{ term.designation }}]
+{%- endif %}
+{%- endfor %}
+{% if l10n.data.domain %}
+domain:[{{ l10n.data.domain }}]
+
+{% endif %}
+{% if l10n.data.definition.definitions[0] %}
+{{ l10n.data.definition.definitions[0].content | sanitize_references }}
+
+{% endif %}
+{% for example in l10n.data.examples.definitions -%}
+[example]
+====
+{{ example.content | sanitize_references }}
+====
+
+{% endfor %}
+{% for note in l10n.data.notes.definitions -%}
+[NOTE]
+====
+{{ note.content | sanitize_references }}
+====
+
+{% endfor %}
+{% for source in l10n.data.sources.sources -%}
+{% assign ref_text = source.origin.text | format_ref -%}
+{% if ref_text != "" -%}
+[.source]
+<<{{ ref_text }}{% if source.origin.locality %},{{ source.origin.locality.type }}="{{ source.origin.locality.reference_from }}"{% elsif source.origin.original %},{{ source.origin.original }}{% endif %}>>{% if source.modification %}, {{ source.modification }}{% endif %}
+
+{% endif %}
+{% endfor %}

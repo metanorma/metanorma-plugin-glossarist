@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "liquid"
-require_relative "liquid/multiply_local_file_system"
 
 module Metanorma
   module Plugin
