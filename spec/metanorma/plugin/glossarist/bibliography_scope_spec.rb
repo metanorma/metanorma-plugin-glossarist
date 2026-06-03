@@ -38,21 +38,19 @@ RSpec.describe "Bibliography scope" do
     let(:document) { Asciidoctor::Document.new }
 
     it "render_bibliography emits entries only for rendered concepts" do
-      skip "Glossarist 2.8.1 silently drops tags on load — tag filter returns empty set" do
-        reader = Asciidoctor::Reader.new <<~ADOC
-          :glossarist-dataset: ds1:./spec/fixtures/dataset-glossarist-v3
-          == Section
-          glossarist::import[ds1, tag=test-domain]
-          glossarist::render_bibliography[ds1]
-        ADOC
+      reader = Asciidoctor::Reader.new <<~ADOC
+        :glossarist-dataset: ds1:./spec/fixtures/dataset-glossarist-v3
+        == Section
+        glossarist::import[ds1, tag=test-domain]
+        glossarist::render_bibliography[ds1]
+      ADOC
 
-        result = preprocessor.process(document, reader).source
+      result = preprocessor.process(document, reader).source
 
-        bib_lines = result.lines.select { |l| l.include?("[[[") }
-        bib_anchors = bib_lines.map { |l| l[/\[\[\[([^,]+)/, 1] }.compact
-        expect(bib_anchors).to include("ievtermbank")
-        expect(bib_anchors).not_to include("CGPM26")
-      end
+      bib_lines = result.lines.select { |l| l.include?("[[[") }
+      bib_anchors = bib_lines.map { |l| l[/\[\[\[([^,]+)/, 1] }.compact
+      expect(bib_anchors).to include("ievtermbank")
+      expect(bib_anchors).not_to include("CGPM26")
     end
 
     it "render_bibliography includes all entries when all concepts rendered" do
