@@ -32,6 +32,15 @@ domain:[{{ l10n.data.domain }}]
 ====
 
 {% endfor %}
+{% if l10n.data.annotations -%}
+{% for annotation in l10n.data.annotations.definitions -%}
+[NOTE]
+====
+{{ annotation.content | sanitize_references }}
+====
+
+{% endfor %}
+{% endif %}
 {% for source in l10n.data.sources.sources -%}
 {% assign ref_text = source.origin.text | format_ref -%}
 {% if ref_text != "" -%}

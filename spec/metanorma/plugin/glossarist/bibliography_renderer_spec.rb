@@ -120,5 +120,40 @@ RSpec.describe Metanorma::Plugin::Glossarist::BibliographyRenderer do
       lines = output.split("\n")
       expect(lines.uniq).to eq(lines)
     end
+
+    it "renders xref entries when bibliography_data is provided" do
+      v3_collection = Glossarist::ManagedConceptCollection.new
+      v3_collection.load_from_files("./spec/fixtures/dataset-glossarist-v3")
+      bib_data = { "ievtermbank" => { "id" => "ievtermbank",
+                                      "title" => "IEV" } }
+      renderer = described_class.new(bibliography_data: bib_data)
+      output = renderer.render_all(v3_collection.to_a)
+      expect(output).to include("[[[ievtermbank")
+    end
+
+    it "extracts cross-references from annotations" do
+      skip "Requires glossarist >= 2.8.6 with annotations support" unless
+        Glossarist::ConceptData.method_defined?(:detailed_definition_fields)
+
+      v3_collection = Glossarist::ManagedConceptCollection.new
+      v3_collection.load_from_files("./spec/fixtures/dataset-glossarist-v3")
+      concept = v3_collection.find { |c| c.data&.id == "1.1" }
+      l10n = concept.localization("eng")
+
+      annotations = l10n.data.annotations
+      expect(annotations).not_to be_empty
+
+      renderer = described_class.new
+      xrefs = renderer.send(:extract_content_xrefs, l10n)
+      expect(xrefs).to include("113-01-10") # from notes
+    end
+
+    it "includes title from bibliography_data in formatted entry" do
+      bib_data = { "ISO/TS 14812:2022" => { "id" => "ISO/TS 14812:2022",
+                                            "title" => "Intelligent Transport Systems" } }
+      renderer = described_class.new(bibliography_data: bib_data)
+      entry = renderer.render_entry(entity_concept)
+      expect(entry).to include("_Intelligent Transport Systems_")
+    end
   end
 end

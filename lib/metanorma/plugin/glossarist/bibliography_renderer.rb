@@ -6,7 +6,7 @@ module Metanorma
   module Plugin
     module Glossarist
       class BibliographyRenderer
-        IEV_ENTRY = "* [[[ievtermbank,IEV]]], _IEV: Electropedia_".freeze
+        IEV_ENTRY = "* [[[ievtermbank,IEV]]], _IEV: Electropedia_"
         IEV_ANCHOR = "ievtermbank"
 
         def initialize(existing_anchors: [], bibliography_data: {})
@@ -77,7 +77,7 @@ module Metanorma
             next if @existing_anchors.include?(ref_id)
             next unless @bibliography_data.key?(ref_id)
 
-            bib = @bibliography_data[ref_id]
+            @bibliography_data[ref_id]
             anchor = ref_id
             @rendered[ref_id] = anchor
 
@@ -101,6 +101,13 @@ module Metanorma
           l10n.definition&.each { |d| parts << d.content.to_s }
           l10n.notes&.each { |n| parts << n.content.to_s }
           l10n.examples&.each { |e| parts << e.content.to_s }
+          if l10n.data.class.method_defined?(:detailed_definition_fields)
+            l10n.data.class.detailed_definition_fields.each do |field|
+              next if %i[definition notes examples].include?(field)
+
+              l10n.data.send(field)&.each { |d| parts << d.content.to_s }
+            end
+          end
           return [] if parts.empty?
 
           Sanitize.extract_xrefs(parts.join(" "))
