@@ -1,13 +1,10 @@
 # frozen_string_literal: true
 
-require "liquid"
-require_relative "liquid/multiply_local_file_system"
-
 module Metanorma
   module Plugin
     module Glossarist
       class Document
-        attr_accessor :content, :file_system
+        attr_accessor :file_system, :registry
 
         def initialize
           @content = []
@@ -15,7 +12,13 @@ module Metanorma
 
         def add_content(content, options = {})
           @content << if options[:render]
-                        render_liquid(content, options)
+                        LiquidRendering.render(
+                          content,
+                          include_paths: [file_system,
+                                          options[:template]].compact,
+                          patterns: LiquidRendering::DOCUMENT_PATTERNS,
+                          registry: registry,
+                        )
                       else
                         content
                       end
@@ -23,21 +26,6 @@ module Metanorma
 
         def to_s
           @content.compact.join("\n")
-        end
-
-        private
-
-        def render_liquid(file_content, options = {})
-          include_paths = [file_system, options[:template]].compact
-          template = ::Liquid::Template.parse(file_content)
-          template.registers[:file_system] = ::Metanorma::Plugin::Glossarist::Liquid::LocalFileSystem.new(
-            include_paths, ["%s.liquid", "_%s.liquid", "_%s.adoc"]
-          )
-          rendered = template.render
-
-          return rendered unless template.errors.any?
-
-          raise template.errors.first.cause
         end
       end
     end

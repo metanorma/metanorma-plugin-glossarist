@@ -1,3 +1,8 @@
+
+# rspec failure tracking
+*.log.txt
+.rspec_status
+.rubocop-https--*
 /.bundle/
 /.yardoc
 /_yardoc/
@@ -6,10 +11,5 @@
 /pkg/
 /spec/reports/
 /tmp/
-
-# rspec failure tracking
-.rspec_status
-
-.rubocop-https--*
-*.log.txt
 Gemfile.lock
+TODO*

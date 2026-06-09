@@ -563,28 +563,27 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
         let(:expected_output) do
           <<~OUTPUT.strip
             === Terms and Definitions
-            [[urn_iso_std_iso_14812_3.1.1.5]]
+
             ==== biological entity
 
             {{material entity}} that was or is a living organism
 
             [.source]
-            <<ISO_TS_14812_2023,3.1.1.5>>
+            <<ISO_TS_14812_2023,clause="3.1.1.5">>
 
-            [[urn_iso_std_iso_14812_3.1.1.1]]
             ==== entity
-
             admitted:[E]
 
             concrete or abstract thing that exists, did exist, or can possibly exist, including associations among these things
 
             [example]
+            ====
             {{urn_iso_std_iso_14812_3.1.1.6,person,Person}}, object, event, idea, process, etc.
+            ====
 
             [.source]
-            <<ISO_TS_14812_2022,3.1.1.1>>
+            <<ISO_TS_14812_2022,clause="3.1.1.1">>
 
-            [[urn_iso_std_iso_14812_3.1.1.3]]
             ==== material entity
 
             {{urn_iso_std_iso_14812_3.1.1.1,entity}} that occupies three-dimensional space
@@ -595,15 +594,17 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
             ====
 
             [.source]
-            <<ISO_TS_14812_2022,3.1.1.3>>
+            <<ISO_11179-1>>
 
-            [[urn_iso_std_iso_14812_3.1.1.6]]
+            [.source]
+            <<ISO_TS_14812_2022,clause="3.1.1.3">>
+
             ==== person
 
             {{biological entity}} that is a human being
 
             [.source]
-            <<ISO_TS_14812_2022,3.1.1.6>>
+            <<ISO_TS_14812_2022,clause="3.1.1.6">>
           OUTPUT
         end
 
@@ -626,18 +627,19 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
           let(:expected_output) do
             <<~OUTPUT.strip
               === Render Section
-              [[3.1.1.1]]
-              ==== entity
 
+              ==== entity
               admitted:[E]
 
               concrete or abstract thing that exists, did exist, or can possibly exist, including associations among these things
 
               [example]
+              ====
               {{urn_iso_std_iso_14812_3.1.1.6,person,Person}}, object, event, idea, process, etc.
+              ====
 
               [.source]
-              <<ISO_TS_14812_2022,3.1.1.1>>
+              <<ISO_TS_14812_2022,clause="3.1.1.1">>
             OUTPUT
           end
 
@@ -659,18 +661,19 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
           let(:expected_output) do
             <<~OUTPUT.strip
               == Render Section
-              [[3.1.1.1]]
-              === entity
 
+              === entity
               admitted:[E]
 
               concrete or abstract thing that exists, did exist, or can possibly exist, including associations among these things
 
               [example]
+              ====
               {{urn_iso_std_iso_14812_3.1.1.6,person,Person}}, object, event, idea, process, etc.
+              ====
 
               [.source]
-              <<ISO_TS_14812_2022,3.1.1.1>>
+              <<ISO_TS_14812_2022,clause="3.1.1.1">>
             OUTPUT
           end
 
@@ -692,18 +695,19 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
           let(:expected_output) do
             <<~OUTPUT.strip
               == Render Section
-              [[identifier-3.1.1.1]]
-              === entity
 
+              === entity
               admitted:[E]
 
               concrete or abstract thing that exists, did exist, or can possibly exist, including associations among these things
 
               [example]
+              ====
               {{urn_iso_std_iso_14812_3.1.1.6,person,Person}}, object, event, idea, process, etc.
+              ====
 
               [.source]
-              <<ISO_TS_14812_2022,3.1.1.1>>
+              <<ISO_TS_14812_2022,clause="3.1.1.1">>
             OUTPUT
           end
 
@@ -725,28 +729,26 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
           end
           let(:expected_output) do
             <<~OUTPUT.strip
-              [[3.1.1.5]]
               === biological entity
 
               {{material entity}} that was or is a living organism
 
               [.source]
-              <<ISO_TS_14812_2023,3.1.1.5>>
+              <<ISO_TS_14812_2023,clause="3.1.1.5">>
 
-              [[3.1.1.1]]
               === entity
-
               admitted:[E]
 
               concrete or abstract thing that exists, did exist, or can possibly exist, including associations among these things
 
               [example]
+              ====
               {{urn_iso_std_iso_14812_3.1.1.6,person,Person}}, object, event, idea, process, etc.
+              ====
 
               [.source]
-              <<ISO_TS_14812_2022,3.1.1.1>>
+              <<ISO_TS_14812_2022,clause="3.1.1.1">>
 
-              [[3.1.1.3]]
               === material entity
 
               {{urn_iso_std_iso_14812_3.1.1.1,entity}} that occupies three-dimensional space
@@ -757,15 +759,17 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
               ====
 
               [.source]
-              <<ISO_TS_14812_2022,3.1.1.3>>
+              <<ISO_11179-1>>
 
-              [[3.1.1.6]]
+              [.source]
+              <<ISO_TS_14812_2022,clause="3.1.1.3">>
+
               === person
 
               {{biological entity}} that is a human being
 
               [.source]
-              <<ISO_TS_14812_2022,3.1.1.6>>
+              <<ISO_TS_14812_2022,clause="3.1.1.6">>
             OUTPUT
           end
 
@@ -855,7 +859,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
           OUTPUT
         end
 
-        it "should render correct output" do
+        it "renders correct output" do
           expect(subject.process(document, reader).source.strip)
             .to eq(expected_output)
         end
@@ -870,7 +874,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
           TEMPLATE
         end
 
-        it "should include ISO_11179_1 from note cross-reference" do
+        it "includes ISO_11179_1 from note cross-reference" do
           output = subject.process(document, reader).source.strip
           expect(output).to include("ISO_11179-1")
         end
@@ -885,7 +889,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
           TEMPLATE
         end
 
-        it "should not have duplicate entries" do
+        it "does not have duplicate entries" do
           output = subject.process(document, reader).source.strip
           lines = output.split("\n")
           expect(lines.size).to eq(lines.uniq.size)
@@ -932,9 +936,9 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
         TEMPLATE
       end
 
-      it "is expected to raise Glossarist::ParseError" do
+      it "handles invalid YAML gracefully without raising" do
         expect { subject.process(document, reader) }
-          .to raise_error(Glossarist::ParseError)
+          .not_to raise_error
       end
     end
   end

@@ -4,11 +4,12 @@ module Metanorma
   module Plugin
     module Glossarist
       class ConceptFilter
-        COLLECTION_FILTERS = %w[lang domain group sort_by].freeze
+        COLLECTION_FILTERS = %w[lang domain group section tag sort_by].freeze
         SORT_LAST = ["￿"].freeze
 
         def initialize(filters)
           @filters = filters || {}
+          @resolver = ConceptPathResolver.new
         end
 
         def apply(collection)
@@ -17,6 +18,8 @@ module Metanorma
           if @filters.key?("domain") || @filters.key?("group")
             result = filter_by_domain(result)
           end
+          result = filter_by_section(result) if @filters.key?("section")
+          result = filter_by_tag(result) if @filters.key?("tag")
           result = filter_by_field(result) if field_filter?
           result = sort(result) if @filters.key?("sort_by")
           result
@@ -44,6 +47,20 @@ module Metanorma
           end
         end
 
+        def filter_by_tag(collection)
+          tag = @filters["tag"]
+          collection.select do |c|
+            c.data.tags&.include?(tag)
+          end
+        end
+
+        def filter_by_section(collection)
+          section_id = @filters["section"]
+          collection.select do |c|
+            c.data.domains&.any? { |d| d.concept_id == "section-#{section_id}" }
+          end
+        end
+
         def sort(collection)
           field = @filters["sort_by"]
           return collection unless field
@@ -52,14 +69,12 @@ module Metanorma
           when "term", "default_designation"
             collection.sort_by { |c| c.default_designation.to_s.downcase }
           else
-            parts = parse_path(field)
-            collection.sort_by { |c| sort_key(c, parts) }
+            collection.sort_by { |c| sort_key(c, field) }
           end
         end
 
-        def sort_key(concept, parts)
-          hash = ConceptSerializer.new(concept).to_h
-          value = dig_path(hash, parts)
+        def sort_key(concept, field)
+          value = @resolver.resolve(concept, field)
           value.nil? ? SORT_LAST : natural_sort_key(value.to_s)
         end
 
@@ -75,10 +90,8 @@ module Metanorma
           start_with = path.include?(".start_with(")
           path, match_value = extract_start_with(path, value, start_with)
 
-          parts = parse_path(path)
           collection.select do |concept|
-            hash = ConceptSerializer.new(concept).to_h
-            actual = dig_path(hash, parts)
+            actual = @resolver.resolve(concept, path)
             if start_with
               actual&.start_with?(match_value)
             else
@@ -94,37 +107,6 @@ module Metanorma
           return [path, value] unless match
 
           [match[1], match[2]]
-        end
-
-        def parse_path(path)
-          path.split(".").flat_map do |segment|
-            if segment.include?("[")
-              parse_indexed_segment(segment)
-            else
-              [segment]
-            end
-          end
-        end
-
-        def parse_indexed_segment(segment)
-          field, index_part = segment.split("[", 2)
-          index = index_part&.delete("]'\"")
-          if index.match?(/\A\d+\z/)
-            [field, index.to_i]
-          else
-            [field, index]
-          end
-        end
-
-        def dig_path(hash, parts)
-          parts.reduce(hash) do |current, key|
-            case current
-            when Hash
-              current[key] || current[key.to_s]
-            when Array
-              key.is_a?(Integer) ? current[key] : nil
-            end
-          end
         end
       end
     end

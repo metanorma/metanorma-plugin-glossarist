@@ -80,7 +80,8 @@ RSpec.describe Metanorma::Plugin::Glossarist::ConceptFilter do
       end
 
       it "sorts nil values last when path is missing for some concepts" do
-        filter = described_class.new({ "lang" => "deu", "sort_by" => "data.localizations['deu'].data.terms[0].designation" })
+        filter = described_class.new({ "lang" => "deu",
+                                       "sort_by" => "data.localizations['deu'].data.terms[0].designation" })
         result = filter.apply(all_concepts)
         expect(result.length).to eq(1)
         expect(result.first.default_designation).to eq("person")
@@ -111,6 +112,26 @@ RSpec.describe Metanorma::Plugin::Glossarist::ConceptFilter do
       end
     end
 
+    describe "section filter" do
+      let(:v3_collection) do
+        c = Glossarist::ManagedConceptCollection.new
+        c.load_from_files("./spec/fixtures/dataset-glossarist-v3")
+        c
+      end
+
+      it "filters by section matching section- prefixed domain" do
+        filter = described_class.new({ "section" => "3" })
+        result = filter.apply(v3_collection)
+        expect(result.map { |c| c.data&.id }).to eq(["1.1"])
+      end
+
+      it "returns empty for non-existent section" do
+        filter = described_class.new({ "section" => "99" })
+        result = filter.apply(v3_collection)
+        expect(result).to be_empty
+      end
+    end
+
     describe "combined filters" do
       it "applies lang and sort_by together" do
         filter = described_class.new({ "lang" => "eng", "sort_by" => "term" })
@@ -128,14 +149,16 @@ RSpec.describe Metanorma::Plugin::Glossarist::ConceptFilter do
       end
 
       it "applies domain and nested sort_by together" do
-        filter = described_class.new({ "domain" => "bar", "sort_by" => "data.identifier" })
+        filter = described_class.new({ "domain" => "bar",
+                                       "sort_by" => "data.identifier" })
         result = filter.apply(all_concepts)
         ids = result.map { |c| c.data.id }
         expect(ids).to eq(["3.1.1.5", "3.1.1.6"])
       end
 
       it "applies lang and nested sort_by together" do
-        filter = described_class.new({ "lang" => "deu", "sort_by" => "data.identifier" })
+        filter = described_class.new({ "lang" => "deu",
+                                       "sort_by" => "data.identifier" })
         result = filter.apply(all_concepts)
         ids = result.map { |c| c.data.id }
         expect(ids).to eq(["3.1.1.6"])

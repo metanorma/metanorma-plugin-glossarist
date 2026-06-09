@@ -1,13 +1,18 @@
 # frozen_string_literal: true
 
+require "set"
+
 module Metanorma
   module Plugin
     module Glossarist
       class BibliographyRenderer
-        include CitationHelper
+        IEV_ENTRY = "* [[[ievtermbank,IEV]]], _IEV: Electropedia_"
+        IEV_ANCHOR = "ievtermbank"
 
-        def initialize
+        def initialize(existing_anchors: [], bibliography_data: {})
           @rendered = {}
+          @existing_anchors = Set.new(existing_anchors)
+          @bibliography_data = bibliography_data
         end
 
         def render_entry(concept, lang: "eng")
@@ -15,13 +20,28 @@ module Metanorma
           return nil unless l10n
 
           entries = source_entries(l10n)
-          warn_unresolved_xrefs(l10n)
+          entries.concat(xref_entries(l10n))
           entries.empty? ? nil : entries.sort.join("\n")
         end
 
         def render_all(concepts, lang: "eng")
-          entries = concepts.filter_map { |c| render_entry(c, lang: lang) }
-          entries.sort.join("\n")
+          all_entries = concepts.filter_map do |concept|
+            l10n = concept.localization(lang)
+            next unless l10n
+
+            source_entries(l10n)
+          end.flatten
+
+          xref_entries = concepts.filter_map do |concept|
+            l10n = concept.localization(lang)
+            next unless l10n
+
+            xref_entries(l10n)
+          end.flatten
+
+          all_entries.concat(xref_entries)
+
+          all_entries.sort.join("\n")
         end
 
         private
@@ -31,26 +51,48 @@ module Metanorma
           return [] if sources.nil? || sources.empty?
 
           sources.filter_map do |source|
-            ref = citation_ref_label(source.origin)
+            ref = source.origin&.text
             next if ref.nil? || ref.empty?
             next if @rendered.key?(ref)
 
             anchor = ref.gsub(%r{[ /:]}, "_")
+            next if @existing_anchors.include?(anchor)
+
             @rendered[ref] = anchor
-            "* [[[#{anchor},#{ref}]]]"
+
+            if anchor == IEV_ANCHOR
+              IEV_ENTRY
+            else
+              format_entry(anchor, ref)
+            end
           end
         end
 
-        def warn_unresolved_xrefs(l10n)
+        def xref_entries(l10n)
           xref_ids = extract_content_xrefs(l10n)
-          return if xref_ids.empty?
+          return [] if xref_ids.empty?
 
-          xref_ids.each do |ref_id|
+          xref_ids.filter_map do |ref_id|
             next if @rendered.value?(ref_id)
+            next if @existing_anchors.include?(ref_id)
+            next unless @bibliography_data.key?(ref_id)
 
-            warn "[glossarist] unresolved bibliography reference: " \
-                 "<<#{ref_id}>> — not defined as a source in the dataset"
+            anchor = ref_id
+            @rendered[ref_id] = anchor
+
+            format_entry(anchor, ref_id)
           end
+        end
+
+        def format_entry(anchor, ref)
+          bib = @bibliography_data[ref]
+          return "* [[[#{anchor},#{ref}]]]" unless bib
+
+          display_ref = bib["reference"] || ref
+          parts = ["* [[[#{anchor},#{display_ref}]]]"]
+          parts << ", _#{bib['title']}_" if bib["title"]
+          parts << ". Available at: #{bib['link']} " if bib["link"]
+          parts.join
         end
 
         def extract_content_xrefs(l10n)
