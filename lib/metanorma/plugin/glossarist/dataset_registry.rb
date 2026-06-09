@@ -85,6 +85,8 @@ module Metanorma
         end
 
         def relative_file_path(document, file_path)
+          return file_path if File.absolute_path?(file_path)
+
           docfile_directory = File.dirname(
             document.attributes["docfile"] || ".",
           )

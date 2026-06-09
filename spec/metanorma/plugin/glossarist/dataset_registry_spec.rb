@@ -11,10 +11,14 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetRegistry do
   end
 
   def document_double
+    docfile = File.join(Dir.tmpdir, "test.adoc")
     resolver = Asciidoctor::PathResolver.new
-    Struct.new(:attributes, :path_resolver).new(
-      { "docfile" => "/test.adoc" }, resolver
+    doc = Struct.new(:attributes, :path_resolver).new(
+      { "docfile" => docfile }, resolver
     )
+    # Warm up the path resolver's internal state
+    resolver.system_path("", File.dirname(docfile))
+    doc
   end
 
   describe "#register" do
