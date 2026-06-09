@@ -52,6 +52,7 @@ module Metanorma
                              skip_dataset: false)
           liquid_doc = Document.new
           liquid_doc.file_system = @config[:file_system]
+          liquid_doc.registry = @registry
 
           loop do
             current_line = input_lines.next

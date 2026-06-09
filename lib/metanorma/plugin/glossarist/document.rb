@@ -4,7 +4,7 @@ module Metanorma
   module Plugin
     module Glossarist
       class Document
-        attr_accessor :file_system
+        attr_accessor :file_system, :registry
 
         def initialize
           @content = []
@@ -17,6 +17,7 @@ module Metanorma
                           include_paths: [file_system,
                                           options[:template]].compact,
                           patterns: LiquidRendering::DOCUMENT_PATTERNS,
+                          registry: registry,
                         )
                       else
                         content

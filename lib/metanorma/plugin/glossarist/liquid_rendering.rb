@@ -10,10 +10,11 @@ module Metanorma
         DOCUMENT_PATTERNS = ["%s.liquid", "_%s.liquid", "_%s.adoc"].freeze
 
         def self.render(content, include_paths:, patterns: DEFAULT_PATTERNS,
-assigns: {})
+                        assigns: {}, registry: nil)
           template = ::Liquid::Template.parse(content)
           template.registers[:file_system] =
             Liquid::LocalFileSystem.new(include_paths, patterns)
+          template.registers[:dataset_registry] = registry if registry
           rendered = template.render(assigns)
           raise template.errors.first.cause if template.errors.any?
 

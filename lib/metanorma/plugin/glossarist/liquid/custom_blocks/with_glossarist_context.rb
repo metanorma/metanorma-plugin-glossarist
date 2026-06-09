@@ -1,6 +1,4 @@
 # frozen_string_literal: true
-
-
 module Metanorma
   module Plugin
     module Glossarist
@@ -28,8 +26,11 @@ module Metanorma
           end
 
           def render(context)
+            registry = context.registers[:dataset_registry]
+
             @contexts.each do |local_context|
-              collection = load_collection(local_context[:file_path].strip)
+              path = local_context[:file_path].strip
+              collection = registry ? registry.load_cached(path) : load_collection(path)
               filtered = ConceptFilter.new(@raw_filters).apply(collection)
               context[local_context[:name]] = filtered.map do |c|
                 ManagedConceptDrop.new(c)

@@ -8,6 +8,7 @@ module Metanorma
       class DatasetRegistry
         def initialize
           @datasets = {}
+          @path_cache = {}
           @bibliography_data = {}
           @context_names = []
         end
@@ -17,10 +18,13 @@ module Metanorma
             context_name, file_path = context.split(":").map(&:strip)
             path = relative_file_path(document, file_path)
             @datasets[context_name] = load_dataset(path).to_a
-            load_bibliography_data(path)
             "#{context_name}=#{path}"
           end
           @context_names.concat(paths)
+        end
+
+        def load_cached(path)
+          @path_cache[path] ||= load_dataset(path)
         end
 
         def resolve_dataset(document, dataset_name)
@@ -30,8 +34,7 @@ module Metanorma
           return unless document
 
           path = relative_file_path(document, dataset_name)
-          collection = load_dataset(path)
-          @datasets[dataset_name] = collection.to_a
+          @datasets[dataset_name] = load_dataset(path).to_a
         end
 
         def find_concept(dataset_name, concept_name, document = nil)
@@ -60,9 +63,12 @@ module Metanorma
         private
 
         def load_dataset(path)
-          collection = ::Glossarist::ManagedConceptCollection.new
-          collection.load_from_files(path)
-          collection
+          @path_cache[path] ||= begin
+            collection = ::Glossarist::ManagedConceptCollection.new
+            collection.load_from_files(path)
+            load_bibliography_data(path)
+            collection
+          end
         end
 
         def load_bibliography_data(dataset_path)
