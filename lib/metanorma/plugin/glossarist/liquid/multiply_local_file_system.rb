@@ -16,7 +16,7 @@ module Metanorma
             full_path = full_path(template_path)
 
             unless File.exist?(full_path)
-              raise FileSystemError,
+              raise ::Liquid::FileSystemError,
                     "No such template '#{template_path}'"
             end
 

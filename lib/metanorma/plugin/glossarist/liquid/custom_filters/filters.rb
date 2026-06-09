@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "liquid"
 
 module Metanorma
   module Plugin
