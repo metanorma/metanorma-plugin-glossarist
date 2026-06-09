@@ -20,7 +20,7 @@ module Metanorma
             parse_filters(filters_part.strip) if filters_part && !filters_part.strip.empty?
 
             contexts_part.split(",").each do |context|
-              context_name, file_path = context.split("=").map(&:strip)
+              context_name, file_path = context.split("=", 2).map(&:strip)
               @contexts << { name: context_name, file_path: file_path }
             end
           end

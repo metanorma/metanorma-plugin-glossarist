@@ -15,7 +15,7 @@ module Metanorma
 
         def register(document, contexts)
           paths = contexts.split(";").map do |context|
-            context_name, file_path = context.split(":").map(&:strip)
+            context_name, file_path = context.split(":", 2).map(&:strip)
             path = relative_file_path(document, file_path)
             @datasets[context_name] = load_dataset(path).to_a
             "#{context_name}=#{path}"
