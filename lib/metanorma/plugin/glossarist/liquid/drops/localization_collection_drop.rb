@@ -7,6 +7,8 @@ module Metanorma
     module Glossarist
       module Liquid
         class LocalizationCollectionDrop < ::Liquid::Drop
+          include Enumerable
+
           def initialize(collection)
             super()
             @collection = collection

@@ -6,18 +6,31 @@
 #
 # Glossarist collections support +self[key]+ but do not yet include
 # IndexedAccess in their published gem. Once they do, this file can be
-# removed.
+# removed entirely.
 #
 # @see Lutaml::Model::Liquid::IndexedAccess (lutaml-model >= 0.8.15)
 # @see https://github.com/lutaml/lutaml-model/pull/705
-%w[
-  Glossarist::Collections::LocalizationCollection
-  Glossarist::Collections::DetailedDefinitionCollection
-  Glossarist::Collections::ConceptSourceCollection
-].each do |class_name|
-  parts = class_name.split("::")
-  const = parts.reduce(Object) { |mod, name| mod.const_get(name) }
-  const.include(Lutaml::Model::Liquid::IndexedAccess) unless const.include?(Lutaml::Model::Liquid::IndexedAccess)
-rescue NameError
-  # Collection class not yet defined — skip
+module Metanorma
+  module Plugin
+    module Glossarist
+      module Liquid
+        module PolyfillIndexedAccess
+          COLLECTION_CLASSES = %w[
+            Glossarist::Collections::LocalizationCollection
+            Glossarist::Collections::DetailedDefinitionCollection
+            Glossarist::Collections::ConceptSourceCollection
+          ].freeze
+
+          def self.apply!
+            COLLECTION_CLASSES.each do |class_name|
+              klass = class_name.split("::").reduce(Object) do |mod, name|
+                mod.const_get(name)
+              end
+              klass.include(Lutaml::Model::Liquid::IndexedAccess) unless klass.include?(Lutaml::Model::Liquid::IndexedAccess)
+            end
+          end
+        end
+      end
+    end
+  end
 end

@@ -105,7 +105,7 @@ module Metanorma
             l10n.data.class.detailed_definition_fields.each do |field|
               next if %i[definition notes examples].include?(field)
 
-              l10n.data.send(field)&.each { |d| parts << d.content.to_s }
+              l10n.data.public_send(field)&.each { |d| parts << d.content.to_s }
             end
           end
           return [] if parts.empty?

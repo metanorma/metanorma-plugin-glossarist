@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "liquid"
-
 module Metanorma
   module Plugin
     module Glossarist
@@ -45,9 +43,11 @@ module Metanorma
         end
 
         def render_tree_node((concept, children), depth, anchor_prefix)
-          result = render_concept(concept, depth: depth, anchor_prefix: anchor_prefix)
+          result = render_concept(concept, depth: depth,
+                                           anchor_prefix: anchor_prefix)
           children.each do |child_node|
-            result += "\n" + render_tree_node(child_node, depth + 1, anchor_prefix)
+            result += "\n" + render_tree_node(child_node, depth + 1,
+                                              anchor_prefix)
           end
           result
         end
@@ -70,7 +70,9 @@ module Metanorma
         end
 
         def build_tree_nodes(concepts, children_of)
-          concepts.map { |c| [c, build_tree_nodes(children_of[concept_id(c)], children_of)] }
+          concepts.map do |c|
+            [c, build_tree_nodes(children_of[concept_id(c)], children_of)]
+          end
         end
 
         def concept_id(concept)
@@ -83,25 +85,27 @@ module Metanorma
 
         def build_anchor(id, prefix)
           anchor = prefix ? "#{prefix}#{id}" : id
-          anchor.match?(/\A\d/) ? anchor : Metanorma::Utils.to_ncname(anchor.gsub(":", "_"))
+          if anchor.match?(/\A\d/)
+            anchor
+          else
+            Metanorma::Utils.to_ncname(anchor.gsub(
+                                         ":", "_"
+                                       ))
+          end
         end
 
         def render_template(content, assigns)
-          include_paths = [TEMPLATES_DIR, @file_system].compact
-          template = ::Liquid::Template.parse(content)
-          template.registers[:file_system] = Liquid::LocalFileSystem.new(
-            include_paths, ["%s.liquid", "_%s.liquid"]
+          LiquidRendering.render(
+            content,
+            include_paths: [TEMPLATES_DIR, @file_system].compact,
+            assigns: assigns,
           )
-          rendered = template.render(assigns)
-          raise template.errors.first.cause if template.errors.any?
-
-          rendered
         end
 
         def normalize_whitespace(text)
           text.gsub(/\n{3,}/, "\n\n")
-              .gsub(/([^\]\n])\n(={2,6} )/, "\\1\n\n\\2")
-              .strip
+            .gsub(/([^\]\n])\n(={2,6} )/, "\\1\n\n\\2")
+            .strip
         end
       end
     end

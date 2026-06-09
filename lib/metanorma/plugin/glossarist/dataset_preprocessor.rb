@@ -20,18 +20,17 @@ module Metanorma
         def initialize(config = {})
           super
           @config = config
-          @datasets = {}
-          @rendered_concepts = []
-          @title_depth = 2
-          @existing_bib_anchors = []
-          @bibliography_data = {}
-          @seen_glossarist = false
-          @context_names = []
         end
 
         def process(document, reader)
           input_lines = reader.lines.to_enum
           @config[:file_system] = relative_file_path(document, "")
+          @registry = DatasetRegistry.new
+          @rendered_concepts = []
+          @title_depth = 2
+          @existing_bib_anchors = []
+          @seen_glossarist = false
+
           processed_doc = prepare_document(document, input_lines)
           log(document, processed_doc.to_s) if @seen_glossarist
           Asciidoctor::PreprocessorReader.new(document,
@@ -93,8 +92,7 @@ module Metanorma
 
         def process_dataset_tag(document, input_lines, liquid_doc, match)
           @seen_glossarist = true
-          @context_names << prepare_dataset_contexts(document, match[1])
-          @context_names.flatten!
+          @registry.register(document, match[1])
           liquid_doc.add_content(prepare_document(document, input_lines).to_s,
                                  render: false)
         end
@@ -137,16 +135,7 @@ module Metanorma
         end
 
         def get_context_path(document, key)
-          if @context_names && !@context_names.empty?
-            context_names = @context_names.map(&:strip)
-            found = context_names.find do |context|
-              context_name, = context.split("=")
-              context_name == key
-            end
-            return found.split("=").last.strip if found
-          end
-
-          relative_file_path(document, key)
+          @registry.context_path(key) || relative_file_path(document, key)
         end
 
         def process_render_tag(liquid_doc, match)
@@ -156,14 +145,14 @@ module Metanorma
           concept_name = matches[1]
           options = parse_options(matches[2..])
 
-          concept = find_concept(context_name, concept_name)
+          concept = @registry.find_concept(context_name, concept_name)
           return unless concept
 
           @rendered_concepts << concept
           renderer = TemplateRenderer.new(file_system: @config[:file_system])
           rendered = renderer.render_concept(concept,
-                                            depth: @title_depth,
-                                            anchor_prefix: options["anchor-prefix"])
+                                             depth: @title_depth,
+                                             anchor_prefix: options["anchor-prefix"])
           liquid_doc.add_content("\n#{rendered}")
         end
 
@@ -174,12 +163,12 @@ module Metanorma
           matches = match[1].split(",").map(&:strip)
           context_name = matches[0]
           options = parse_options(matches[1..])
-          dataset = @datasets[context_name.strip]
+          dataset = @registry.resolve_dataset(nil, context_name)
           return unless dataset
 
-          filter_options = options.reject { |k, _| RENDER_OPTIONS.include?(k) }
+          filter_options = options.except(*RENDER_OPTIONS)
           concepts = ConceptFilter.new(filter_options).apply(dataset)
-          concepts = concepts.select { |c| c.default_designation }
+          concepts = concepts.select(&:default_designation)
           @rendered_concepts.concat(concepts)
           renderer = TemplateRenderer.new(file_system: @config[:file_system])
           rendered = renderer.render_concepts(concepts,
@@ -191,12 +180,18 @@ module Metanorma
         def process_bibliography(document, liquid_doc, match)
           @seen_glossarist = true
           dataset_name = match[1].strip
-          concepts = @rendered_concepts.empty? ? resolve_dataset(document, dataset_name) : @rendered_concepts
+          concepts = if @rendered_concepts.empty?
+                       @registry.resolve_dataset(
+                         document, dataset_name
+                       )
+                     else
+                       @rendered_concepts
+                     end
           return unless concepts && !concepts.empty?
 
           renderer = BibliographyRenderer.new(
             existing_anchors: @existing_bib_anchors,
-            bibliography_data: @bibliography_data,
+            bibliography_data: @registry.bibliography_data,
           )
           liquid_doc.add_content(renderer.render_all(concepts))
         end
@@ -204,64 +199,15 @@ module Metanorma
         def process_bibliography_entry(document, liquid_doc, match)
           @seen_glossarist = true
           dataset_name, concept_name = match[1].split(",").map(&:strip)
-          concept = find_concept(dataset_name, concept_name, document)
+          concept = @registry.find_concept(dataset_name, concept_name, document)
           return unless concept
 
           renderer = BibliographyRenderer.new(
             existing_anchors: @existing_bib_anchors,
-            bibliography_data: @bibliography_data,
+            bibliography_data: @registry.bibliography_data,
           )
           entry = renderer.render_entry(concept)
           liquid_doc.add_content(entry) if entry
-        end
-
-        def prepare_dataset_contexts(document, contexts)
-          contexts.split(";").map do |context|
-            context_name, file_path = context.split(":").map(&:strip)
-            path = relative_file_path(document, file_path)
-            dataset = load_dataset(path)
-            @datasets[context_name] = dataset.to_a
-            load_bibliography_data(path)
-            "#{context_name}=#{path}"
-          end
-        end
-
-        def load_bibliography_data(dataset_path)
-          bib_path = File.join(dataset_path, "bibliography.yaml")
-          return unless File.exist?(bib_path)
-
-          entries = YAML.safe_load(File.read(bib_path), permitted_classes: [Symbol, Date])
-          return unless entries.is_a?(Array)
-
-          @bibliography_data = entries.each_with_object({}) do |entry, hash|
-            hash[entry["id"]] = entry if entry["id"]
-          end
-        end
-
-        def load_dataset(path)
-          collection = ::Glossarist::ManagedConceptCollection.new
-          collection.load_from_files(path)
-          collection
-        end
-
-        def find_concept(dataset_name, concept_name, document = nil)
-          dataset = resolve_dataset(document, dataset_name)
-          return unless dataset
-
-          dataset.find do |concept|
-            concept.default_designation == concept_name
-          end
-        end
-
-        def resolve_dataset(document, dataset_name)
-          dataset = @datasets[dataset_name]
-          return dataset if dataset
-
-          return unless document
-
-          path = relative_file_path(document, dataset_name)
-          collection = load_dataset(path)
-          @datasets[dataset_name] = collection.to_a
         end
 
         def relative_file_path(document, file_path)

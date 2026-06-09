@@ -19,7 +19,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::Liquid::ManagedConceptDrop do
 
     it "exposes localizations with bracket access returning a drop" do
       l10n = drop.data.localizations["eng"]
-      expect(l10n).to be_a(::Liquid::Drop)
+      expect(l10n).to be_a(Liquid::Drop)
       expect(l10n.data.terms[0].designation).to eq("entity")
     end
   end
@@ -51,7 +51,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::Liquid::ManagedConceptDrop do
   describe "#liquid_method_missing" do
     it "returns a localization drop for valid language code" do
       result = drop.liquid_method_missing("eng")
-      expect(result).to be_a(::Liquid::Drop)
+      expect(result).to be_a(Liquid::Drop)
     end
 
     it "returns nil for unknown language code" do

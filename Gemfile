@@ -16,3 +16,5 @@ gem "rubocop-rake"
 gem "rubocop-rspec"
 
 gemspec
+
+gem "glossarist", path: "../../glossarist/glossarist-ruby"

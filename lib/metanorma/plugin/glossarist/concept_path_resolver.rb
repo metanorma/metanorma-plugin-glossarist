@@ -4,60 +4,16 @@ module Metanorma
   module Plugin
     module Glossarist
       class ConceptPathResolver
-        def initialize(concept)
-          @concept = concept
-        end
+        DELEGATED_TO_DATA = %w[localizations tags].freeze
+        DATA_ALIASES = { "identifier" => :id }.freeze
 
-        def resolve(path)
+        def resolve(concept, path)
           parts = parse_path(path)
-          value = navigate(@concept, parts)
+          value = navigate(concept, parts)
           value.is_a?(String) ? value : value.to_s
         end
 
         private
-
-        MANAGED_CONCEPT_METHODS = {
-          "data" => :data,
-          "localizations" => :localizations_via_data,
-          "identifier" => :identifier,
-          "default_designation" => :default_designation,
-          "schema_version" => :schema_version,
-          "uuid" => :uuid,
-          "tags" => :tags_via_data,
-        }.freeze
-
-        MANAGED_CONCEPT_DATA_METHODS = {
-          "localizations" => :localizations,
-          "localized_concepts" => :localized_concepts,
-          "id" => :id,
-          "identifier" => :id,
-          "tags" => :tags,
-          "domains" => :domains,
-          "related" => :related,
-        }.freeze
-
-        LOCALIZED_CONCEPT_METHODS = {
-          "data" => :data,
-          "language_code" => :language_code,
-          "entry_status" => :entry_status,
-        }.freeze
-
-        CONCEPT_DATA_METHODS = {
-          "terms" => :terms,
-          "definition" => :definition,
-          "examples" => :examples,
-          "notes" => :notes,
-          "sources" => :sources,
-          "id" => :id,
-          "domain" => :domain,
-          "related" => :related,
-        }.freeze
-
-        COLLECTION_INDEXABLE = [
-          ::Glossarist::Collections::DetailedDefinitionCollection,
-          ::Glossarist::Collections::ConceptSourceCollection,
-          ::Glossarist::Collections::DesignationCollection,
-        ].freeze
 
         def parse_path(path)
           path.split(".").flat_map do |segment|
@@ -82,6 +38,7 @@ module Metanorma
         def navigate(obj, parts)
           parts.reduce(obj) do |current, key|
             return nil if current.nil?
+
             access(current, key)
           end
         end
@@ -98,59 +55,44 @@ module Metanorma
           when ::Glossarist::ManagedConcept
             resolve_managed_concept(obj, key)
           when ::Glossarist::ManagedConceptData
-            resolve_managed_concept_data(obj, key)
-          when ::Glossarist::LocalizedConcept
-            resolve_localized_concept(obj, key)
-          when ::Glossarist::ConceptData
-            resolve_concept_data(obj, key)
+            resolve_data_attribute(obj, key)
           when ::Glossarist::Collections::LocalizationCollection
             obj.find_by(:language_code, key)
-          when Hash
-            obj[key] || obj[key.to_s]
           when Array
             nil
-          else
-            resolve_generic(obj, key)
+          when ::Lutaml::Model::Serializable
+            resolve_attribute(obj, key)
+          when Hash
+            obj[key] || obj[key.to_s]
           end
         end
 
         def resolve_managed_concept(concept, key)
-          method = MANAGED_CONCEPT_METHODS[key]
-          return nil unless method
+          return concept.data.public_send(key) if DELEGATED_TO_DATA.include?(key)
 
-          case method
-          when :localizations_via_data then concept.data.localizations
-          when :tags_via_data then concept.data.tags
-          else concept.public_send(method)
-          end
+          resolve_attribute(concept, key) { concept.public_send(key.to_sym) }
+        rescue NoMethodError
+          nil
         end
 
-        def resolve_managed_concept_data(data, key)
-          method = MANAGED_CONCEPT_DATA_METHODS[key]
-          method ? data.public_send(method) : nil
+        def resolve_data_attribute(data, key)
+          aliased = DATA_ALIASES[key]
+          return data.public_send(aliased) if aliased && data.class.attributes.key?(aliased)
+
+          resolve_attribute(data, key)
         end
 
-        def resolve_localized_concept(l10n, key)
-          method = LOCALIZED_CONCEPT_METHODS[key]
-          method ? l10n.public_send(method) : nil
-        end
+        def resolve_attribute(obj, key)
+          sym = key.to_sym
+          return obj.public_send(sym) if obj.class.attributes.key?(sym)
 
-        def resolve_concept_data(data, key)
-          method = CONCEPT_DATA_METHODS[key]
-          method ? data.public_send(method) : nil
-        end
-
-        def resolve_generic(obj, key)
-          return nil unless obj.is_a?(::Lutaml::Model::Serializable)
-          obj.class.attributes.key?(key.to_sym) ? obj.public_send(key.to_sym) : nil
+          yield if block_given?
         end
 
         def access_index(obj, index)
-          case obj
-          when Array then obj[index]
-          when *COLLECTION_INDEXABLE then obj[index]
-          else nil
-          end
+          obj[index]
+        rescue NoMethodError
+          nil
         end
       end
     end

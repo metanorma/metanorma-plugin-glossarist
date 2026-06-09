@@ -42,6 +42,14 @@ RSpec.describe Metanorma::Plugin::Glossarist::TemplateRenderer do
       result = renderer.render_concept(concept, depth: 2)
       expect(result).to include("admitted:[E]")
     end
+
+    it "builds anchor with prefix when provided" do
+      concept = collection.find { |c| c.default_designation == "entity" }
+      renderer = described_class.new(file_system: nil, lang: "eng")
+      result = renderer.render_concept(concept, depth: 2,
+                                                anchor_prefix: "prefix-")
+      expect(result).to be_a(String)
+    end
   end
 
   describe "#render_concepts" do
@@ -59,6 +67,18 @@ RSpec.describe Metanorma::Plugin::Glossarist::TemplateRenderer do
     it "normalizes excessive newlines" do
       result = renderer.render_concepts(concepts, depth: 2)
       expect(result).not_to match(/\n{3,}/)
+    end
+
+    it "builds parent-child tree for v3 concepts with broader/narrower" do
+      v3_collection = Glossarist::ManagedConceptCollection.new
+      v3_collection.load_from_files("./spec/fixtures/dataset-glossarist-v3")
+      v3_renderer = described_class.new(file_system: nil, lang: "eng")
+
+      result = v3_renderer.render_concepts(v3_collection.to_a, depth: 2)
+      parent_idx = result.index("parent concept")
+      child_idx = result.index("child concept")
+      expect(parent_idx).to be < child_idx
+      expect(result).to match(/=== parent concept.*==== child concept/m)
     end
   end
 end

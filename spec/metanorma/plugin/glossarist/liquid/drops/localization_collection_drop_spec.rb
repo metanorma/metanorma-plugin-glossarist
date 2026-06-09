@@ -31,8 +31,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::Liquid::LocalizationCollectionDrop
 
   describe "#each" do
     it "iterates over localizations" do
-      items = []
-      drop.each { |i| items << i }
+      items = drop.map { |i| i }
       expect(items.size).to eq(localizations.size)
     end
   end

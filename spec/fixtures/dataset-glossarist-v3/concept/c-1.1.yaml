@@ -9,6 +9,9 @@ data:
   - type: narrower
     ref:
       id: '1.1.1'
+  domains:
+  - concept_id: section-3
+    ref_type: section
   tags:
   - test-domain
 ---

@@ -3,7 +3,7 @@
 RSpec.describe Metanorma::Plugin::Glossarist::Sanitize do
   describe ".references" do
     it "replaces URN references with NCName anchors" do
-      input = '{{urn:iso:std:iso:34000,Some Term}}rest'
+      input = "{{urn:iso:std:iso:34000,Some Term}}rest"
       result = described_class.references(input)
       expect(result).to match(/{{[^,}]+,Some Term}}rest/)
     end
@@ -18,7 +18,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::Sanitize do
     end
 
     it "replaces first URN reference (regex consumes rest of string)" do
-      input = '{{urn:iso:std:iso:34000,Term A}}rest'
+      input = "{{urn:iso:std:iso:34000,Term A}}rest"
       result = described_class.references(input)
       expect(result).not_to include("urn:iso:std:iso:34000")
     end

@@ -859,7 +859,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
           OUTPUT
         end
 
-        it "should render correct output" do
+        it "renders correct output" do
           expect(subject.process(document, reader).source.strip)
             .to eq(expected_output)
         end
@@ -874,7 +874,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
           TEMPLATE
         end
 
-        it "should include ISO_11179_1 from note cross-reference" do
+        it "includes ISO_11179_1 from note cross-reference" do
           output = subject.process(document, reader).source.strip
           expect(output).to include("ISO_11179-1")
         end
@@ -889,7 +889,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
           TEMPLATE
         end
 
-        it "should not have duplicate entries" do
+        it "does not have duplicate entries" do
           output = subject.process(document, reader).source.strip
           lines = output.split("\n")
           expect(lines.size).to eq(lines.uniq.size)

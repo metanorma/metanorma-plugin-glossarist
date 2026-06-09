@@ -4,11 +4,12 @@ module Metanorma
   module Plugin
     module Glossarist
       class ConceptFilter
-        COLLECTION_FILTERS = %w[lang domain group tag sort_by].freeze
+        COLLECTION_FILTERS = %w[lang domain group section tag sort_by].freeze
         SORT_LAST = ["￿"].freeze
 
         def initialize(filters)
           @filters = filters || {}
+          @resolver = ConceptPathResolver.new
         end
 
         def apply(collection)
@@ -17,6 +18,7 @@ module Metanorma
           if @filters.key?("domain") || @filters.key?("group")
             result = filter_by_domain(result)
           end
+          result = filter_by_section(result) if @filters.key?("section")
           result = filter_by_tag(result) if @filters.key?("tag")
           result = filter_by_field(result) if field_filter?
           result = sort(result) if @filters.key?("sort_by")
@@ -52,6 +54,13 @@ module Metanorma
           end
         end
 
+        def filter_by_section(collection)
+          section_id = @filters["section"]
+          collection.select do |c|
+            c.data.domains&.any? { |d| d.concept_id == "section-#{section_id}" }
+          end
+        end
+
         def sort(collection)
           field = @filters["sort_by"]
           return collection unless field
@@ -65,7 +74,7 @@ module Metanorma
         end
 
         def sort_key(concept, field)
-          value = ConceptPathResolver.new(concept).resolve(field)
+          value = @resolver.resolve(concept, field)
           value.nil? ? SORT_LAST : natural_sort_key(value.to_s)
         end
 
@@ -82,7 +91,7 @@ module Metanorma
           path, match_value = extract_start_with(path, value, start_with)
 
           collection.select do |concept|
-            actual = ConceptPathResolver.new(concept).resolve(path)
+            actual = @resolver.resolve(concept, path)
             if start_with
               actual&.start_with?(match_value)
             else

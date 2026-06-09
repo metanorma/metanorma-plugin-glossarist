@@ -8,6 +8,10 @@ module Metanorma
       module Liquid
         module CustomFilters
           module Filters
+            def self.register!
+              ::Liquid::Environment.default.register_filter(self)
+            end
+
             def values(list)
               list.values
             end
@@ -27,5 +31,3 @@ module Metanorma
     end
   end
 end
-
-Liquid::Environment.default.register_filter(Metanorma::Plugin::Glossarist::Liquid::CustomFilters::Filters)

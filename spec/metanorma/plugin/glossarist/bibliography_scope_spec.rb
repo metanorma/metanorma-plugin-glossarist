@@ -48,7 +48,7 @@ RSpec.describe "Bibliography scope" do
       result = preprocessor.process(document, reader).source
 
       bib_lines = result.lines.select { |l| l.include?("[[[") }
-      bib_anchors = bib_lines.map { |l| l[/\[\[\[([^,]+)/, 1] }.compact
+      bib_anchors = bib_lines.filter_map { |l| l[/\[\[\[([^,]+)/, 1] }
       expect(bib_anchors).to include("ievtermbank")
       expect(bib_anchors).not_to include("CGPM26")
     end
@@ -64,7 +64,7 @@ RSpec.describe "Bibliography scope" do
       result = preprocessor.process(document, reader).source
 
       bib_lines = result.lines.select { |l| l.include?("[[[") }
-      bib_anchors = bib_lines.map { |l| l[/\[\[\[([^,]+)/, 1] }.compact
+      bib_anchors = bib_lines.filter_map { |l| l[/\[\[\[([^,]+)/, 1] }
       expect(bib_anchors).to include("ievtermbank")
       expect(bib_anchors).to include("CGPM26")
     end
@@ -83,7 +83,7 @@ RSpec.describe "Bibliography scope" do
       result = preprocessor.process(document, reader).source
 
       bib_lines = result.lines.select { |l| l.include?("[[[") }
-      bib_anchors = bib_lines.map { |l| l[/\[\[\[([^,]+)/, 1] }.compact
+      bib_anchors = bib_lines.filter_map { |l| l[/\[\[\[([^,]+)/, 1] }
       expect(bib_anchors).to include("CGPM26")
       cgpm_count = bib_anchors.count("CGPM26")
       expect(cgpm_count).to eq(1)

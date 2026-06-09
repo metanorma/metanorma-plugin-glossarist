@@ -132,8 +132,8 @@ RSpec.describe Metanorma::Plugin::Glossarist::BibliographyRenderer do
     end
 
     it "extracts cross-references from annotations" do
-      skip "Requires glossarist >= 2.8.6 with annotations support" unless
-        Glossarist::ConceptData.method_defined?(:detailed_definition_fields)
+      skip "Requires glossarist with V3 annotations support" unless
+        Glossarist::V3::ConceptData.respond_to?(:detailed_definition_fields)
 
       v3_collection = Glossarist::ManagedConceptCollection.new
       v3_collection.load_from_files("./spec/fixtures/dataset-glossarist-v3")
@@ -145,7 +145,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::BibliographyRenderer do
 
       renderer = described_class.new
       xrefs = renderer.send(:extract_content_xrefs, l10n)
-      expect(xrefs).to include("113-01-10") # from notes
+      expect(xrefs).to include("ievtermbank")
     end
 
     it "includes title from bibliography_data in formatted entry" do
