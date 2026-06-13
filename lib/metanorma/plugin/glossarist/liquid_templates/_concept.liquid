@@ -1,4 +1,5 @@
-{{ depth_marker }} {{ l10n.data.terms[0].designation }}
+{% if anchor %}[[{{ anchor }}]]
+{% endif %}{{ depth_marker }} {{ l10n.data.terms[0].designation }}
 {%- for term in l10n.data.terms offset:1 %}
 {%- if term.normative_status == "preferred" %}
 preferred:[{{ term.designation }}]
