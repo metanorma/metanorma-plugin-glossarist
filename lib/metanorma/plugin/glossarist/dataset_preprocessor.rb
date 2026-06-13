@@ -10,6 +10,7 @@ module Metanorma
       class DatasetPreprocessor < Asciidoctor::Extensions::Preprocessor
         DATASET_ATTR_REGEX = /^:glossarist-dataset:\s*(.*?)$/m
         IMPORT_REGEX = /^glossarist::import\[(.*?)\]$/m
+        IMPORT_SECTIONS_REGEX = /^glossarist::import_sections\[(.*?)\]$/m
         RENDER_REGEX = /^glossarist::render\[(.*?)\]$/m
         BLOCK_REGEX = /^\[glossarist,(.+?),(.+?)\]$/m
         BIBLIOGRAPHY_REGEX = /^glossarist::render_bibliography\[(.*?)\]$/m
@@ -26,6 +27,7 @@ module Metanorma
           input_lines = reader.lines.to_enum
           @config[:file_system] = relative_file_path(document, "")
           @registry = DatasetRegistry.new
+          @renderer = TemplateRenderer.new(file_system: @config[:file_system])
           @rendered_concepts = []
           @title_depth = 2
           @existing_bib_anchors = []
@@ -71,6 +73,8 @@ module Metanorma
             process_dataset_tag(document, input_lines, liquid_doc, match)
           elsif (match = current_line.match(RENDER_REGEX))
             process_render_tag(liquid_doc, match)
+          elsif (match = current_line.match(IMPORT_SECTIONS_REGEX))
+            process_import_sections_tag(document, liquid_doc, match)
           elsif (match = current_line.match(IMPORT_REGEX))
             process_import_tag(liquid_doc, match)
           elsif (match = current_line.match(BIBLIOGRAPHY_REGEX))
@@ -150,7 +154,7 @@ module Metanorma
           return unless concept
 
           @rendered_concepts << concept
-          renderer = TemplateRenderer.new(file_system: @config[:file_system])
+          renderer = @renderer
           rendered = renderer.render_concept(concept,
                                              depth: @title_depth,
                                              anchor_prefix: options["anchor-prefix"])
@@ -171,11 +175,52 @@ module Metanorma
           concepts = ConceptFilter.new(filter_options).apply(dataset)
           concepts = concepts.select(&:default_designation)
           @rendered_concepts.concat(concepts)
-          renderer = TemplateRenderer.new(file_system: @config[:file_system])
+          renderer = @renderer
           rendered = renderer.render_concepts(concepts,
                                               depth: @title_depth,
                                               anchor_prefix: options["anchor-prefix"])
           liquid_doc.add_content("\n#{rendered}")
+        end
+
+        def process_import_sections_tag(_document, liquid_doc, match)
+          @seen_glossarist = true
+          matches = match[1].split(",").map(&:strip)
+          context_name = matches[0]
+          options = parse_options(matches[1..])
+
+          sections = @registry.register_sections(context_name)
+          return unless sections && !sections.empty?
+
+          dataset = @registry.resolve_dataset(nil, context_name)
+          return unless dataset
+
+          renderer = @renderer
+          sort_by = options["sort_by"] || "term"
+          section_filter = SectionFilter.new(
+            exclude: (options["section_exclude"] || "").split("|"),
+            include: (options["section_include"] || "").split("|"),
+          )
+          filtered = section_filter.apply(sections)
+          parts = render_section_concepts(filtered, dataset, renderer,
+                                          sort_by, options)
+          liquid_doc.add_content("\n#{parts.join("\n\n")}")
+        end
+
+        def render_section_concepts(sections, dataset, renderer, sort_by,
+                                    options)
+          sections.filter_map do |section|
+            filter_options = { "section" => section.id, "sort_by" => sort_by }
+            concepts = ConceptFilter.new(filter_options).apply(dataset)
+            concepts = concepts.select(&:default_designation)
+            next if concepts.empty?
+
+            @rendered_concepts.concat(concepts)
+            heading = "#{'=' * (@title_depth + 1)} #{section.name || section.id}"
+            rendered = renderer.render_concepts(concepts,
+                                                depth: @title_depth + 1,
+                                                anchor_prefix: options["anchor-prefix"])
+            "#{heading}\n\n#{rendered}"
+          end
         end
 
         def process_bibliography(document, liquid_doc, match)
