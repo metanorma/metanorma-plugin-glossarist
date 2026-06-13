@@ -26,7 +26,7 @@ Gem::Specification.new do |spec|
   spec.required_ruby_version = ">= 3.1.0"
 
   spec.add_dependency "asciidoctor"
-  spec.add_dependency "glossarist", "~> 2.8", ">= 2.8.7"
+  spec.add_dependency "glossarist", "~> 2.8", ">= 2.8.8"
   spec.add_dependency "liquid"
   spec.add_dependency "metanorma-utils"
   spec.metadata["rubygems_mfa_required"] = "true"
