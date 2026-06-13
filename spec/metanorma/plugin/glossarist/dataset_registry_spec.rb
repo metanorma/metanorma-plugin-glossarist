@@ -101,6 +101,37 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetRegistry do
     end
   end
 
+  describe "#register_sections" do
+    it "returns Section objects from register.yaml" do
+      registry = described_class.new
+      registry.register(document_double, "ds:#{v3_path}")
+      sections = registry.register_sections("ds")
+      expect(sections).not_to be_nil
+      expect(sections.length).to eq(2)
+      expect(sections.first).to be_a(Glossarist::Section)
+      expect(sections.map(&:id)).to include("3", "other")
+    end
+
+    it "returns nil for unregistered context name" do
+      registry = described_class.new
+      expect(registry.register_sections("unknown")).to be_nil
+    end
+
+    it "returns nil when register.yaml does not exist" do
+      registry = described_class.new
+      registry.register(document_double, "ds:#{v2_path}")
+      expect(registry.register_sections("ds")).to be_nil
+    end
+
+    it "caches the parsed register across calls" do
+      registry = described_class.new
+      registry.register(document_double, "ds:#{v3_path}")
+      first = registry.register_sections("ds")
+      second = registry.register_sections("ds")
+      expect(first).to equal(second) # same object identity
+    end
+  end
+
   describe "#bibliography_data" do
     it "returns empty hash when no bibliography.yaml exists" do
       registry = described_class.new
@@ -112,7 +143,20 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetRegistry do
       Dir.mktmpdir do |dir|
         bib = [{ "id" => "ref1", "title" => "Test Reference" }]
         File.write(File.join(dir, "bibliography.yaml"), bib.to_yaml)
-        FileUtils.mkdir_p(File.join(dir, "concept"))
+        concept_dir = File.join(dir, "concept")
+        FileUtils.mkdir_p(concept_dir)
+        File.write(File.join(concept_dir, "test.yaml"), <<~YAML)
+          ---
+          identifier: '1'
+          data:
+            id: '1'
+            localized_concepts: {}
+          ---
+          data:
+            language_code: eng
+            terms: []
+          id: lc-1-eng
+        YAML
 
         registry = described_class.new
         registry.register(document_double, "ds:#{dir}")
