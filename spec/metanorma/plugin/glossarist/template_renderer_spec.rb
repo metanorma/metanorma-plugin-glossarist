@@ -48,7 +48,12 @@ RSpec.describe Metanorma::Plugin::Glossarist::TemplateRenderer do
       renderer = described_class.new(file_system: nil, lang: "eng")
       result = renderer.render_concept(concept, depth: 2,
                                                 anchor_prefix: "prefix-")
-      expect(result).to be_a(String)
+      expect(result).to include("[[prefix-")
+    end
+
+    it "renders anchor bookmark for concept" do
+      result = renderer.render_concept(concept, depth: 2)
+      expect(result).to match(/\[\[.*\]\]/)
     end
   end
 
