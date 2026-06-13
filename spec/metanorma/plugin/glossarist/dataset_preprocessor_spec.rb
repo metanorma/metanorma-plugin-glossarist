@@ -564,6 +564,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
           <<~OUTPUT.strip
             === Terms and Definitions
 
+            [[urn_iso_std_iso_14812_3.1.1.5]]
             ==== biological entity
 
             {{material entity}} that was or is a living organism
@@ -571,6 +572,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
             [.source]
             <<ISO_TS_14812_2023,clause="3.1.1.5">>
 
+            [[urn_iso_std_iso_14812_3.1.1.1]]
             ==== entity
             admitted:[E]
 
@@ -584,6 +586,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
             [.source]
             <<ISO_TS_14812_2022,clause="3.1.1.1">>
 
+            [[urn_iso_std_iso_14812_3.1.1.3]]
             ==== material entity
 
             {{urn_iso_std_iso_14812_3.1.1.1,entity}} that occupies three-dimensional space
@@ -599,6 +602,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
             [.source]
             <<ISO_TS_14812_2022,clause="3.1.1.3">>
 
+            [[urn_iso_std_iso_14812_3.1.1.6]]
             ==== person
 
             {{biological entity}} that is a human being
@@ -628,6 +632,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
             <<~OUTPUT.strip
               === Render Section
 
+              [[3.1.1.1]]
               ==== entity
               admitted:[E]
 
@@ -662,6 +667,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
             <<~OUTPUT.strip
               == Render Section
 
+              [[3.1.1.1]]
               === entity
               admitted:[E]
 
@@ -696,6 +702,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
             <<~OUTPUT.strip
               == Render Section
 
+              [[identifier-3.1.1.1]]
               === entity
               admitted:[E]
 
@@ -729,6 +736,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
           end
           let(:expected_output) do
             <<~OUTPUT.strip
+              [[3.1.1.5]]
               === biological entity
 
               {{material entity}} that was or is a living organism
@@ -736,6 +744,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
               [.source]
               <<ISO_TS_14812_2023,clause="3.1.1.5">>
 
+              [[3.1.1.1]]
               === entity
               admitted:[E]
 
@@ -749,6 +758,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
               [.source]
               <<ISO_TS_14812_2022,clause="3.1.1.1">>
 
+              [[3.1.1.3]]
               === material entity
 
               {{urn_iso_std_iso_14812_3.1.1.1,entity}} that occupies three-dimensional space
@@ -764,6 +774,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
               [.source]
               <<ISO_TS_14812_2022,clause="3.1.1.3">>
 
+              [[3.1.1.6]]
               === person
 
               {{biological entity}} that is a human being
@@ -777,6 +788,97 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
             expect(subject.process(document, reader).source.strip)
               .to eq(expected_output)
           end
+        end
+      end
+
+      context "[import sections]" do
+        let(:reader) do
+          Asciidoctor::Reader.new <<~TEMPLATE
+            :glossarist-dataset: dataset1:./spec/fixtures/dataset-glossarist-v3
+
+            == Terms
+            glossarist::import_sections[dataset1]
+          TEMPLATE
+        end
+
+        it "renders concepts grouped by sections from register.yaml" do
+          result = subject.process(document, reader).source
+          expect(result).to include("=== Terms related to testing")
+          expect(result).to include("parent concept")
+          expect(result).not_to include("standalone concept")
+        end
+
+        it "renders section headings at correct depth" do
+          result = subject.process(document, reader).source
+          expect(result).to include("=== Terms related to testing")
+        end
+
+        it "skips sections with no matching concepts" do
+          result = subject.process(document, reader).source
+          expect(result).not_to include("Other terms")
+        end
+
+        it "emits bibliography only for section-filtered concepts" do
+          reader = Asciidoctor::Reader.new <<~TEMPLATE
+            :glossarist-dataset: dataset1:./spec/fixtures/dataset-glossarist-v3
+
+            == Terms
+            glossarist::import_sections[dataset1]
+            glossarist::render_bibliography[dataset1]
+          TEMPLATE
+          result = subject.process(document, reader).source
+          bib_lines = result.lines.select { |l| l.include?("[[[") }
+          bib_anchors = bib_lines.filter_map { |l| l[/\[\[\[([^,]+)/, 1] }
+          expect(bib_anchors).to include("ievtermbank")
+          expect(bib_anchors).not_to include("CGPM26")
+        end
+      end
+
+      context "[import sections with include/exclude]" do
+        it "excludes sections matching section_exclude" do
+          reader = Asciidoctor::Reader.new <<~TEMPLATE
+            :glossarist-dataset: dataset1:./spec/fixtures/dataset-glossarist-v3
+
+            == Terms
+            glossarist::import_sections[dataset1,section_exclude=3]
+          TEMPLATE
+          result = subject.process(document, reader).source
+          expect(result).not_to include("Terms related to testing")
+        end
+
+        it "includes only sections matching section_include" do
+          reader = Asciidoctor::Reader.new <<~TEMPLATE
+            :glossarist-dataset: dataset1:./spec/fixtures/dataset-glossarist-v3
+
+            == Terms
+            glossarist::import_sections[dataset1,section_include=other]
+          TEMPLATE
+          result = subject.process(document, reader).source
+          expect(result).not_to include("Terms related to testing")
+        end
+
+        it "supports custom sort_by option" do
+          reader = Asciidoctor::Reader.new <<~TEMPLATE
+            :glossarist-dataset: dataset1:./spec/fixtures/dataset-glossarist-v3
+
+            == Terms
+            glossarist::import_sections[dataset1,sort_by=data.identifier]
+          TEMPLATE
+          result = subject.process(document, reader).source
+          expect(result).to include("=== Terms related to testing")
+          expect(result).to include("parent concept")
+        end
+
+        it "supports anchor-prefix option without error" do
+          reader = Asciidoctor::Reader.new <<~TEMPLATE
+            :glossarist-dataset: dataset1:./spec/fixtures/dataset-glossarist-v3
+
+            == Terms
+            glossarist::import_sections[dataset1,anchor-prefix=iso10303-]
+          TEMPLATE
+          result = subject.process(document, reader).source
+          expect(result).to include("=== Terms related to testing")
+          expect(result).to include("parent concept")
         end
       end
 
