@@ -1,0 +1,21 @@
+data:
+  language_code: eng
+  terms:
+  - designation: child concept
+    normative_status: preferred
+    type: expression
+  - designation: CC
+    normative_status: admitted
+    type: expression
+  definition:
+  - content: a concept that has a broader concept
+  notes: []
+  examples: []
+  sources:
+  - origin:
+      ref:
+        source: ievtermbank
+      locality:
+        type: clause
+        reference_from: 113-01-08
+id: lc-1.1.1-eng
