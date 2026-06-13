@@ -56,6 +56,16 @@ module Metanorma
           found&.split("=")&.last&.strip
         end
 
+        def register_sections(context_name)
+          dataset_path = context_path(context_name)
+          return nil unless dataset_path
+
+          @register_cache ||= {}
+          @register_cache[dataset_path] ||=
+            ::Glossarist::DatasetRegister.from_directory(dataset_path)
+          @register_cache[dataset_path]&.sections
+        end
+
         def bibliography_data
           @bibliography_data
         end
