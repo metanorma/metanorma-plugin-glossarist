@@ -61,32 +61,49 @@ module Metanorma
           when Array
             nil
           when ::Lutaml::Model::Serializable
-            resolve_attribute(obj, key)
+            read_attribute(obj, key)
           when Hash
             obj[key] || obj[key.to_s]
           end
         end
 
         def resolve_managed_concept(concept, key)
-          return concept.data.public_send(key) if DELEGATED_TO_DATA.include?(key)
+          if DELEGATED_TO_DATA.include?(key)
+            return read_attribute(concept.data,
+                                  key)
+          end
 
-          resolve_attribute(concept, key) { concept.public_send(key.to_sym) }
+          read_attribute(concept, key) { read_method(concept, key) }
         rescue NoMethodError
           nil
         end
 
         def resolve_data_attribute(data, key)
           aliased = DATA_ALIASES[key]
-          return data.public_send(aliased) if aliased && data.class.attributes.key?(aliased)
+          if aliased && data.class.attributes.key?(aliased)
+            return read_attribute(data, aliased)
+          end
 
-          resolve_attribute(data, key)
+          read_attribute(data, key)
         end
 
-        def resolve_attribute(obj, key)
+        # Reads a validated public attribute from a Lutaml::Model::Serializable
+        # object. Uses public_send because the attribute name is determined at
+        # runtime from path strings. Falls back to the block for non-attribute
+        # public methods (e.g., ManagedConcept#default_designation).
+        def read_attribute(obj, key)
           sym = key.to_sym
-          return obj.public_send(sym) if obj.class.attributes.key?(sym)
+          if obj.class.respond_to?(:attributes) && obj.class.attributes.key?(sym)
+            obj.public_send(sym)
+          elsif block_given?
+            yield
+          end
+        end
 
-          yield if block_given?
+        # Calls a public method by name on the object. Used as a fallback for
+        # methods that aren't lutaml-model attributes (e.g., computed accessors).
+        def read_method(obj, key)
+          obj.public_send(key.to_sym)
         end
 
         def access_index(obj, index)
