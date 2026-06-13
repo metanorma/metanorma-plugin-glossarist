@@ -4,7 +4,6 @@ module Metanorma
   module Plugin
     module Glossarist
       class TemplateRenderer
-        TEMPLATES_DIR = File.join(File.dirname(__FILE__), "liquid_templates")
         DEFAULT_TEMPLATE = File.join(TEMPLATES_DIR, "_concept.liquid")
 
         def initialize(file_system:, lang: "eng")

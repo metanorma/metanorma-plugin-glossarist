@@ -7,6 +7,9 @@ require "glossarist"
 module Metanorma
   module Plugin
     module Glossarist
+      TEMPLATES_DIR = File.join(File.dirname(__FILE__), "metanorma",
+                                "plugin", "glossarist", "liquid_templates").freeze
+
       autoload :BibliographyRenderer,
                "metanorma/plugin/glossarist/bibliography_renderer"
       autoload :ConceptFilter, "metanorma/plugin/glossarist/concept_filter"
@@ -19,6 +22,7 @@ module Metanorma
       autoload :Liquid, "metanorma/plugin/glossarist/liquid"
       autoload :LiquidRendering, "metanorma/plugin/glossarist/liquid_rendering"
       autoload :Sanitize, "metanorma/plugin/glossarist/sanitize"
+      autoload :SectionFilter, "metanorma/plugin/glossarist/section_filter"
       autoload :TemplateRenderer,
                "metanorma/plugin/glossarist/template_renderer"
     end
