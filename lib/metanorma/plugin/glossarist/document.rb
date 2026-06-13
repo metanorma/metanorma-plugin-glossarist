@@ -15,6 +15,7 @@ module Metanorma
                         LiquidRendering.render(
                           content,
                           include_paths: [file_system,
+                                          TEMPLATES_DIR,
                                           options[:template]].compact,
                           patterns: LiquidRendering::DOCUMENT_PATTERNS,
                           registry: registry,
