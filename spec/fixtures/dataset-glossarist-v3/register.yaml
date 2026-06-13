@@ -1,0 +1,7 @@
+sections:
+  - id: "3"
+    names:
+      eng: "Terms related to testing"
+  - id: "other"
+    names:
+      eng: "Other terms"

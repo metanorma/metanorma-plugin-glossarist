@@ -1,0 +1,21 @@
+data:
+  language_code: eng
+  terms:
+  - designation: standalone concept
+    normative_status: preferred
+    type: expression
+  - designation: SC
+    normative_status: alt
+    type: expression
+  definition:
+  - content: a concept with a non-IEV source
+  notes:
+  - content: A note without cross-references.
+  examples: []
+  sources:
+  - origin:
+      ref:
+        source: CGPM26
+      original: 26th meeting of the CGPM (2018), Resolution 2
+    modification: Modified for test purposes.
+id: lc-1.2-eng

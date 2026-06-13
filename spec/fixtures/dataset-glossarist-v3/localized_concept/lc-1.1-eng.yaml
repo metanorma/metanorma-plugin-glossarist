@@ -1,0 +1,23 @@
+data:
+  language_code: eng
+  terms:
+  - designation: parent concept
+    normative_status: preferred
+    type: expression
+  definition:
+  - content: a concept that has narrower concepts
+  notes:
+  - content: This is a note with a cross-reference to <<ievtermbank,clause="113-01-10">>.
+  examples:
+  - content: This is an example.
+  annotations:
+  - content: This concept is used as a parent in the test hierarchy.
+  sources:
+  - origin:
+      ref:
+        source: ievtermbank
+      locality:
+        type: clause
+        reference_from: 113-01-07
+    modification: Modified for testing.
+id: lc-1.1-eng
