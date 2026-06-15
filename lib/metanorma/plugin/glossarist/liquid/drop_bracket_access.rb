@@ -26,7 +26,7 @@ module Metanorma
               klass = class_name.split("::").reduce(Object) do |mod, name|
                 mod.const_get(name)
               end
-              klass.include(Lutaml::Model::Liquid::IndexedAccess) unless klass.include?(Lutaml::Model::Liquid::IndexedAccess)
+              klass.include(::Lutaml::Model::Liquid::IndexedAccess) unless klass.include?(::Lutaml::Model::Liquid::IndexedAccess)
             end
           end
         end
