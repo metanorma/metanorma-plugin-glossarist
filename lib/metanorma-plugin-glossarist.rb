@@ -22,7 +22,9 @@ module Metanorma
       autoload :Liquid, "metanorma/plugin/glossarist/liquid"
       autoload :LiquidRendering, "metanorma/plugin/glossarist/liquid_rendering"
       autoload :Sanitize, "metanorma/plugin/glossarist/sanitize"
+      autoload :SectionCascade, "metanorma/plugin/glossarist/section_cascade"
       autoload :SectionFilter, "metanorma/plugin/glossarist/section_filter"
+      autoload :SectionRenderer, "metanorma/plugin/glossarist/section_renderer"
       autoload :TemplateRenderer,
                "metanorma/plugin/glossarist/template_renderer"
     end
