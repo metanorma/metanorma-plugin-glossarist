@@ -3,36 +3,50 @@
 module Metanorma
   module Plugin
     module Glossarist
+      # Filters a concept collection by lang, domain, section, tag, generic
+      # field paths, and sort_by. Composable: every filter narrows the
+      # collection independently.
+      #
+      # Section filtering supports cascading membership: a concept in
+      # section "3.1.1" is also a member of "3.1" and "3" via transitive
+      # ancestor traversal. This requires a DatasetRegister collaborator
+      # (passed via `#apply`'s second arg) when section filtering is used.
       class ConceptFilter
         COLLECTION_FILTERS = %w[lang domain group section tag sort_by].freeze
         SORT_LAST = ["￿"].freeze
+        SECTION_REF_TYPE = "section"
+        DOMAIN_REF_TYPE = "domain"
 
         def initialize(filters)
           @filters = filters || {}
           @resolver = ConceptPathResolver.new
         end
 
-        def apply(collection)
-          result = collection
+        # Applies all configured filters in canonical order.
+        # @param collection [Enumerable<ManagedConcept>]
+        # @param register [Glossarist::DatasetRegister, nil] required for
+        #   cascading section filtering; ignored otherwise.
+        # @return [Array<ManagedConcept>]
+        def apply(collection, register: nil)
+          result = collection.to_a
           result = filter_by_lang(result) if @filters.key?("lang")
           if @filters.key?("domain") || @filters.key?("group")
             result = filter_by_domain(result)
           end
-          result = filter_by_section(result) if @filters.key?("section")
+          if @filters.key?("section")
+            result = filter_by_section(result,
+                                       register)
+          end
           result = filter_by_tag(result) if @filters.key?("tag")
-          result = filter_by_field(result) if field_filter?
+          result = filter_by_field(result) if field_filters?
           result = sort(result) if @filters.key?("sort_by")
           result
         end
 
         private
 
-        def field_filter?
+        def field_filters?
           (@filters.keys - COLLECTION_FILTERS).any?
-        end
-
-        def field_filter_key
-          (@filters.keys - COLLECTION_FILTERS).first
         end
 
         def filter_by_lang(collection)
@@ -41,24 +55,29 @@ module Metanorma
         end
 
         def filter_by_domain(collection)
-          domain = @filters["domain"] || @filters["group"]
-          collection.select do |c|
-            c.data.domains&.any? { |d| d.concept_id == domain }
+          domain_id = @filters["domain"] || @filters["group"]
+          collection.select do |concept|
+            domain_ids(concept).include?(domain_id)
           end
         end
 
         def filter_by_tag(collection)
           tag = @filters["tag"]
-          collection.select do |c|
-            c.data.tags&.include?(tag)
+          collection.select { |c| c.data.tags&.include?(tag) }
+        end
+
+        def filter_by_section(collection, register)
+          target_id = @filters["section"]
+          cascade = SectionCascade.new(register)
+          collection.select do |concept|
+            cascade.member?(concept, target_id)
           end
         end
 
-        def filter_by_section(collection)
-          section_id = @filters["section"]
-          collection.select do |c|
-            c.data.domains&.any? { |d| d.concept_id == "section-#{section_id}" }
-          end
+        def domain_ids(concept)
+          Array(concept.data&.domains)
+            .select { |d| d.ref_type == DOMAIN_REF_TYPE }
+            .filter_map(&:concept_id)
         end
 
         def sort(collection)
@@ -84,29 +103,32 @@ module Metanorma
         end
 
         def filter_by_field(collection)
-          path = field_filter_key
-          value = @filters[path]
-
-          start_with = path.include?(".start_with(")
-          path, match_value = extract_start_with(path, value, start_with)
+          path, value, start_with = field_filter_spec
+          start_with_match_value = extract_start_with_value(path, value)
+          path, match_value = if start_with_match_value
+                                [start_with_match_value[:path],
+                                 start_with_match_value[:value]]
+                              else
+                                [path, value]
+                              end
 
           collection.select do |concept|
             actual = @resolver.resolve(concept, path)
-            if start_with
-              actual&.start_with?(match_value)
-            else
-              actual == value
-            end
+            start_with ? actual&.start_with?(match_value) : actual == value
           end
         end
 
-        def extract_start_with(path, value, start_with)
-          return [path, value] unless start_with
+        def field_filter_spec
+          path = (@filters.keys - COLLECTION_FILTERS).first
+          start_with = path.include?(".start_with(")
+          [path, @filters[path], start_with]
+        end
 
+        def extract_start_with_value(path, _value)
           match = path.match(/^([^.]+(?:\.[^.]+)*)\.start_with\(([^)]+)\)$/)
-          return [path, value] unless match
+          return nil unless match
 
-          [match[1], match[2]]
+          { path: match[1], value: match[2] }
         end
       end
     end
