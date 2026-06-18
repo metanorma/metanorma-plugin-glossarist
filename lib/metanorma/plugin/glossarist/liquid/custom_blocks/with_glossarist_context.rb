@@ -31,7 +31,7 @@ module Metanorma
 
             @contexts.each do |local_context|
               path = local_context[:file_path].strip
-              collection = registry ? registry.load_cached(path) : load_collection(path)
+              collection = registry ? registry.concepts_at(path) : load_collection(path)
               filtered = ConceptFilter.new(@raw_filters).apply(collection)
               context[local_context[:name]] = filtered.map do |c|
                 ManagedConceptDrop.new(c)

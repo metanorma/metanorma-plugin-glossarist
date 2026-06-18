@@ -1,0 +1,9 @@
+bibliography:
+  - id: ievtermbank
+    reference: IEV
+    title: "IEV: Electropedia"
+    type: termbank
+  - id: CGPM26
+    reference: "CGPM 26 (2018) Res. 2"
+    title: "26th meeting of the CGPM (2018), Resolution 2"
+    type: proceedings
