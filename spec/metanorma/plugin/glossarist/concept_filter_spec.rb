@@ -119,6 +119,12 @@ RSpec.describe Metanorma::Plugin::Glossarist::ConceptFilter do
         c
       end
 
+      let(:v3_path) do
+        File.expand_path("../../../fixtures/dataset-glossarist-v3", __dir__)
+      end
+
+      let(:register) { Glossarist::DatasetRegister.from_directory(v3_path) }
+
       it "filters by section matching section- prefixed domain" do
         filter = described_class.new({ "section" => "3" })
         result = filter.apply(v3_collection)
@@ -128,6 +134,26 @@ RSpec.describe Metanorma::Plugin::Glossarist::ConceptFilter do
       it "returns empty for non-existent section" do
         filter = described_class.new({ "section" => "99" })
         result = filter.apply(v3_collection)
+        expect(result).to be_empty
+      end
+
+      it "cascades to ancestor sections when register is provided" do
+        filter = described_class.new({ "section" => "3" })
+        result = filter.apply(v3_collection, register: register)
+        # 1.1 (section 3) and 1.1.1 (section 3.1, which cascades to 3)
+        ids = result.map { |c| c.data&.id }
+        expect(ids).to contain_exactly("1.1", "1.1.1")
+      end
+
+      it "matches the direct child section when register is provided" do
+        filter = described_class.new({ "section" => "3.1" })
+        result = filter.apply(v3_collection, register: register)
+        expect(result.map { |c| c.data&.id }).to eq(["1.1.1"])
+      end
+
+      it "excludes sibling sections when cascading" do
+        filter = described_class.new({ "section" => "other" })
+        result = filter.apply(v3_collection, register: register)
         expect(result).to be_empty
       end
     end
