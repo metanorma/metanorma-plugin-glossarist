@@ -5,92 +5,106 @@ require "glossarist"
 module Metanorma
   module Plugin
     module Glossarist
+      # Resolves, caches, and exposes dataset models for a document.
+      #
+      # Single source of truth for everything the preprocessor needs from a
+      # glossarist dataset: concepts, section hierarchy, and bibliography.
+      # Each is exposed as the typed Glossarist model object so callers
+      # never poke at raw YAML hashes.
       class DatasetRegistry
+        BIBLIOGRAPHY_FILENAME = "bibliography.yaml"
+        REGISTER_FILENAME = "register.yaml"
+
         def initialize
-          @datasets = {}
-          @path_cache = {}
-          @bibliography_data = {}
-          @context_names = []
+          @stores = {}
+          @registers = {}
+          @bibliographies = {}
+          @context_paths = {}
         end
 
         def register(document, contexts)
-          paths = contexts.split(";").map do |context|
+          contexts.split(";").map do |context|
             context_name, file_path = context.split(":", 2).map(&:strip)
             path = relative_file_path(document, file_path)
-            @datasets[context_name] = load_dataset(path).to_a
+            @context_paths[context_name] = path
             "#{context_name}=#{path}"
           end
-          @context_names.concat(paths)
-        end
-
-        def load_cached(path)
-          @path_cache[path] ||= load_dataset(path)
         end
 
         def resolve_dataset(document, dataset_name)
-          dataset = @datasets[dataset_name]
-          return dataset if dataset
+          return concepts_for(dataset_name) if @context_paths.key?(dataset_name)
 
-          return unless document
+          path = relative_file_path(document, dataset_name) if document
+          return unless path
 
-          path = relative_file_path(document, dataset_name)
-          @datasets[dataset_name] = load_dataset(path).to_a
+          concepts_at(path)
         end
 
         def find_concept(dataset_name, concept_name, document = nil)
           dataset = resolve_dataset(document, dataset_name)
           return unless dataset
 
-          dataset.find do |concept|
-            concept.default_designation == concept_name
-          end
+          dataset.find { |concept| concept.default_designation == concept_name }
         end
 
         def context_path(key)
-          return nil if @context_names.empty?
+          @context_paths[key]
+        end
 
-          found = @context_names.find do |context|
-            context_name, = context.split("=")
-            context_name.strip == key
-          end
-          found&.split("=")&.last&.strip
+        # Returns the DatasetRegister for a registered context, or nil.
+        # The DatasetRegister is the single source of truth for section
+        # hierarchy and concept→section membership (cascading ancestors).
+        def register_for(context_name)
+          path = @context_paths[context_name]
+          return nil unless path
+
+          register_at(path)
         end
 
         def register_sections(context_name)
-          dataset_path = context_path(context_name)
-          return nil unless dataset_path
-
-          @register_cache ||= {}
-          @register_cache[dataset_path] ||=
-            ::Glossarist::DatasetRegister.from_directory(dataset_path)
-          @register_cache[dataset_path]&.sections
+          register_for(context_name)&.sections
         end
 
-        def bibliography_data
-          @bibliography_data
+        # Returns the BibliographyData for a registered context, or nil.
+        # Exposed as the typed model so callers iterate entries via
+        # BibliographyEntry accessors (#id, #reference, #title, #link).
+        def bibliography_for(context_name)
+          path = @context_paths[context_name]
+          return nil unless path
+
+          bibliography_at(path)
+        end
+
+        # Returns concepts cached at an absolute path. Used by Liquid
+        # blocks that receive a pre-resolved absolute path.
+        def concepts_at(path)
+          store_for(path).concepts
         end
 
         private
 
-        def load_dataset(path)
-          @path_cache[path] ||= begin
-            collection = ::Glossarist::ManagedConceptCollection.new
-            collection.load_from_files(path)
-            load_bibliography_data(path)
-            collection
+        def concepts_for(context_name)
+          path = @context_paths[context_name]
+          path ? concepts_at(path) : nil
+        end
+
+        def store_for(path)
+          @stores[path] ||= begin
+            store = ::Glossarist::GlossaryStore.new
+            store.load_directory(path)
+            store
           end
         end
 
-        def load_bibliography_data(dataset_path)
-          bib_path = File.join(dataset_path, "bibliography.yaml")
-          return unless File.exist?(bib_path)
+        def register_at(path)
+          @registers[path] ||=
+            ::Glossarist::DatasetRegister.from_directory(path)
+        end
 
-          entries = YAML.safe_load_file(bib_path,
-                                        permitted_classes: [Symbol, Date])
-          return unless entries.is_a?(Array)
-
-          @bibliography_data = entries.each_with_object({}) do |entry, hash|
-            hash[entry["id"]] = entry if entry["id"]
+        def bibliography_at(path)
+          @bibliographies[path] ||= begin
+            file = File.join(path, BIBLIOGRAPHY_FILENAME)
+            ::Glossarist::BibliographyData.from_file(file)
           end
         end
 

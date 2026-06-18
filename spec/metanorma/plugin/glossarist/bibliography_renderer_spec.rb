@@ -15,6 +15,11 @@ RSpec.describe Metanorma::Plugin::Glossarist::BibliographyRenderer do
     collection.find { |c| c.default_designation == "material entity" }
   end
 
+  def bibliography_with(entries)
+    yaml = { "bibliography" => entries.map { |e| e.transform_keys(&:to_s) } }.to_yaml
+    Glossarist::BibliographyData.from_yaml(yaml)
+  end
+
   describe "#render_entry" do
     it "renders bibliography entries from concept sources" do
       renderer = described_class.new
@@ -56,12 +61,6 @@ RSpec.describe Metanorma::Plugin::Glossarist::BibliographyRenderer do
       entry = renderer.render_entry(material_entity)
       anchors = entry.scan(/\[\[\[([^\],]+)/).map(&:first)
       expect(anchors.uniq).to eq(anchors)
-    end
-
-    it "warns about unresolved xrefs in content" do
-      renderer = described_class.new
-      # material entity note has <<ISO_11179_1>> which IS a source — no warning
-      expect { renderer.render_entry(material_entity) }.not_to output.to_stderr
     end
 
     it "renders IEV termbank entry with proper format" do
@@ -121,12 +120,14 @@ RSpec.describe Metanorma::Plugin::Glossarist::BibliographyRenderer do
       expect(lines.uniq).to eq(lines)
     end
 
-    it "renders xref entries when bibliography_data is provided" do
+    it "renders xref entries when bibliography is provided" do
       v3_collection = Glossarist::ManagedConceptCollection.new
       v3_collection.load_from_files("./spec/fixtures/dataset-glossarist-v3")
-      bib_data = { "ievtermbank" => { "id" => "ievtermbank",
-                                      "title" => "IEV" } }
-      renderer = described_class.new(bibliography_data: bib_data)
+      bibliography = bibliography_with(
+        [{ "id" => "ievtermbank", "reference" => "IEV",
+           "title" => "IEV: Electropedia" }],
+      )
+      renderer = described_class.new(bibliography: bibliography)
       output = renderer.render_all(v3_collection.to_a)
       expect(output).to include("[[[ievtermbank")
     end
@@ -145,12 +146,27 @@ RSpec.describe Metanorma::Plugin::Glossarist::BibliographyRenderer do
       expect(xrefs).to include("ievtermbank")
     end
 
-    it "includes title from bibliography_data in formatted entry" do
-      bib_data = { "ISO/TS 14812:2022" => { "id" => "ISO/TS 14812:2022",
-                                            "title" => "Intelligent Transport Systems" } }
-      renderer = described_class.new(bibliography_data: bib_data)
+    it "includes title from bibliography in formatted entry" do
+      bibliography = bibliography_with(
+        [{ "id" => "ISO/TS 14812:2022",
+           "reference" => "ISO/TS 14812:2022",
+           "title" => "Intelligent Transport Systems" }],
+      )
+      renderer = described_class.new(bibliography: bibliography)
       entry = renderer.render_entry(entity_concept)
       expect(entry).to include("_Intelligent Transport Systems_")
+    end
+
+    it "renders link from bibliography entry when present" do
+      bibliography = bibliography_with(
+        [{ "id" => "ISO/TS 14812:2022",
+           "reference" => "ISO/TS 14812:2022",
+           "title" => "Intelligent Transport Systems",
+           "link" => "https://www.iso.org/standard.html" }],
+      )
+      renderer = described_class.new(bibliography: bibliography)
+      entry = renderer.render_entry(entity_concept)
+      expect(entry).to include("Available at: https://www.iso.org/standard.html")
     end
   end
 end

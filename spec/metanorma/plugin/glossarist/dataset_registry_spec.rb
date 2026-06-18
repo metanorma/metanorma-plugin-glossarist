@@ -132,36 +132,41 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetRegistry do
     end
   end
 
-  describe "#bibliography_data" do
-    it "returns empty hash when no bibliography.yaml exists" do
+  describe "#bibliography_for" do
+    it "returns nil when no bibliography.yaml exists" do
       registry = described_class.new
       registry.register(document_double, "ds:#{v2_path}")
-      expect(registry.bibliography_data).to eq({})
+      expect(registry.bibliography_for("ds")).to be_nil
     end
 
-    it "loads bibliography data from YAML file" do
-      Dir.mktmpdir do |dir|
-        bib = [{ "id" => "ref1", "title" => "Test Reference" }]
-        File.write(File.join(dir, "bibliography.yaml"), bib.to_yaml)
-        concept_dir = File.join(dir, "concept")
-        FileUtils.mkdir_p(concept_dir)
-        File.write(File.join(concept_dir, "test.yaml"), <<~YAML)
-          ---
-          identifier: '1'
-          data:
-            id: '1'
-            localized_concepts: {}
-          ---
-          data:
-            language_code: eng
-            terms: []
-          id: lc-1-eng
-        YAML
+    it "loads typed BibliographyData from a V3 dataset" do
+      registry = described_class.new
+      registry.register(document_double, "ds:#{v3_path}")
+      bibliography = registry.bibliography_for("ds")
+      expect(bibliography).to be_a(Glossarist::BibliographyData)
+    end
 
-        registry = described_class.new
-        registry.register(document_double, "ds:#{dir}")
-        expect(registry.bibliography_data).to eq({ "ref1" => bib[0] })
-      end
+    it "exposes typed BibliographyEntry accessors from a V3 dataset" do
+      registry = described_class.new
+      registry.register(document_double, "ds:#{v3_path}")
+      iev = registry.bibliography_for("ds").find("ievtermbank")
+      expect(iev).to be_a(Glossarist::BibliographyEntry)
+      expect(iev.title).to eq("IEV: Electropedia")
+      expect(iev.reference).to eq("IEV")
+      expect(iev.type).to eq("termbank")
+    end
+
+    it "caches the bibliography across calls" do
+      registry = described_class.new
+      registry.register(document_double, "ds:#{v3_path}")
+      first = registry.bibliography_for("ds")
+      second = registry.bibliography_for("ds")
+      expect(first).to equal(second)
+    end
+
+    it "returns nil for an unknown context name" do
+      registry = described_class.new
+      expect(registry.bibliography_for("unknown")).to be_nil
     end
   end
 end

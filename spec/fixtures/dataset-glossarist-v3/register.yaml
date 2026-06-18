@@ -1,7 +1,15 @@
+schema_type: glossarist
+schema_version: "3"
+id: test-dataset-v3
+urn: "urn:test:dataset:v3"
 sections:
   - id: "3"
     names:
       eng: "Terms related to testing"
+    children:
+      - id: "3.1"
+        names:
+          eng: "Nested testing subsection"
   - id: "other"
     names:
       eng: "Other terms"
