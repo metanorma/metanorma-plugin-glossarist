@@ -3,7 +3,7 @@
 module Metanorma
   module Plugin
     module Glossarist
-      VERSION = "0.3.9"
+      VERSION = "0.3.10"
     end
   end
 end
