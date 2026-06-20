@@ -12,6 +12,12 @@ data:
   domains:
   - concept_id: "3"
     ref_type: section
+  figures:
+  - mixed-reflection
+  tables:
+  - unit-conversion
+  formulas:
+  - wave-equation
   tags:
   - test-domain
 ---

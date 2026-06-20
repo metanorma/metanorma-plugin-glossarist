@@ -1,0 +1,18 @@
+id: unit-conversion
+identifier: "Table 1"
+caption:
+  eng: SI base units
+alt:
+  eng: Table of SI base units with symbols and dimensions
+description:
+  eng: Seven base units — metre, kilogram, second, ampere, kelvin, mole, candela.
+content:
+  headers:
+    - Unit
+    - Symbol
+    - Dimension
+  rows:
+    - [metre, m, L]
+    - [kilogram, kg, M]
+    - [second, s, T]
+format: structured

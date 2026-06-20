@@ -15,6 +15,7 @@ module Metanorma
         BLOCK_REGEX = /^\[glossarist,(.+?),(.+?)\]$/m
         BIBLIOGRAPHY_REGEX = /^glossarist::render_bibliography\[(.*?)\]$/m
         BIBLIOGRAPHY_ENTRY_REGEX = /^glossarist::render_bibliography_entry\[(.*?)\]$/m
+        NON_VERBAL_REGEX = /^glossarist::render_(figures|tables|formulas)\[(.*?)\]$/m
 
         BIB_ANCHOR_REGEX = /^\*\s*\[\[\[([^,]+)/
 
@@ -69,30 +70,45 @@ module Metanorma
         end
 
         def process_line(document, input_lines, current_line, liquid_doc)
-          if (match = current_line.match(DATASET_ATTR_REGEX))
-            process_dataset_tag(document, input_lines, liquid_doc, match)
-          elsif (match = current_line.match(RENDER_REGEX))
-            process_render_tag(liquid_doc, match)
-          elsif (match = current_line.match(IMPORT_SECTIONS_REGEX))
-            process_import_sections_tag(document, liquid_doc, match)
-          elsif (match = current_line.match(IMPORT_REGEX))
-            process_import_tag(liquid_doc, match)
-          elsif (match = current_line.match(BIBLIOGRAPHY_REGEX))
-            process_bibliography(document, liquid_doc, match)
-          elsif (match = current_line.match(BIBLIOGRAPHY_ENTRY_REGEX))
-            process_bibliography_entry(document, liquid_doc, match)
-          elsif (match = current_line.match(BLOCK_REGEX))
-            process_glossarist_block(document, liquid_doc, input_lines, match)
+          handler = directive_handler(current_line)
+          if handler
+            handler.call(document, input_lines, liquid_doc)
           else
-            if /^==+ \S/.match?(current_line)
-              @title_depth = current_line.sub(/ .*$/,
-                                              "").size
-            end
-            if (match = current_line.match(BIB_ANCHOR_REGEX))
-              @existing_bib_anchors << match[1]
-            end
-            liquid_doc.add_content(current_line)
+            handle_plain_line(current_line, liquid_doc)
           end
+        end
+
+        # Returns a callable that handles the directive on +line+, or nil
+        # for plain content. Keeping the dispatch table small (regex →
+        # block) lets us add a new directive by appending one entry.
+        def directive_handler(line)
+          if (m = line.match(DATASET_ATTR_REGEX))
+            ->(doc, lines, ldoc) { process_dataset_tag(doc, lines, ldoc, m) }
+          elsif (m = line.match(RENDER_REGEX))
+            ->(_, _, ldoc) { process_render_tag(ldoc, m) }
+          elsif (m = line.match(IMPORT_SECTIONS_REGEX))
+            ->(doc, _, ldoc) { process_import_sections_tag(doc, ldoc, m) }
+          elsif (m = line.match(IMPORT_REGEX))
+            ->(_, _, ldoc) { process_import_tag(ldoc, m) }
+          elsif (m = line.match(BIBLIOGRAPHY_REGEX))
+            ->(doc, _, ldoc) { process_bibliography(doc, ldoc, m) }
+          elsif (m = line.match(BIBLIOGRAPHY_ENTRY_REGEX))
+            ->(doc, _, ldoc) { process_bibliography_entry(doc, ldoc, m) }
+          elsif (m = line.match(NON_VERBAL_REGEX))
+            ->(_, _, ldoc) { process_non_verbal(ldoc, m) }
+          elsif (m = line.match(BLOCK_REGEX))
+            ->(doc, lines, ldoc) { process_glossarist_block(doc, ldoc, lines, m) }
+          end
+        end
+
+        def handle_plain_line(current_line, liquid_doc)
+          if /^==+ \S/.match?(current_line)
+            @title_depth = current_line.sub(/ .*$/, "").size
+          end
+          if (match = current_line.match(BIB_ANCHOR_REGEX))
+            @existing_bib_anchors << match[1]
+          end
+          liquid_doc.add_content(current_line)
         end
 
         def process_dataset_tag(document, input_lines, liquid_doc, match)
@@ -157,7 +173,8 @@ module Metanorma
           renderer = @renderer
           rendered = renderer.render_concept(concept,
                                              depth: @title_depth,
-                                             anchor_prefix: options["anchor-prefix"])
+                                             anchor_prefix: options["anchor-prefix"],
+                                             non_verbal: non_verbal_for(context_name))
           liquid_doc.add_content("\n#{rendered}")
         end
 
@@ -179,7 +196,8 @@ module Metanorma
           renderer = @renderer
           rendered = renderer.render_concepts(concepts,
                                               depth: @title_depth,
-                                              anchor_prefix: options["anchor-prefix"])
+                                              anchor_prefix: options["anchor-prefix"],
+                                              non_verbal: non_verbal_for(context_name))
           liquid_doc.add_content("\n#{rendered}")
         end
 
@@ -196,11 +214,11 @@ module Metanorma
           dataset = @registry.resolve_dataset(nil, context_name)
           return unless dataset
 
-          parts = render_sections(dataset, register, sections, options)
+          parts = render_sections(dataset, register, sections, context_name, options)
           liquid_doc.add_content("\n#{parts.join("\n\n")}")
         end
 
-        def render_sections(dataset, register, sections, options)
+        def render_sections(dataset, register, sections, context_name, options)
           section_filter = SectionFilter.new(
             exclude: (options["section_exclude"] || "").split("|"),
             include: (options["section_include"] || "").split("|"),
@@ -213,10 +231,23 @@ module Metanorma
             depth: @title_depth,
             sort_by: options["sort_by"] || SectionRenderer::DEFAULT_SORT_BY,
             anchor_prefix: options["anchor-prefix"],
+            non_verbal: non_verbal_for(context_name),
           )
           renderer.render(filtered) do |concepts|
             @rendered_concepts.concat(concepts)
           end
+        end
+
+        # Builds a NonVerbalRenderer scoped to a dataset context, or
+        # returns nil if the dataset has no figures/tables/formulas. The
+        # resulting renderer is passed through to TemplateRenderer and
+        # SectionRenderer so concept-attached refs render as AsciiDoc
+        # blocks alongside the concept body.
+        def non_verbal_for(context_name)
+          collections = @registry.non_verbal_collections(context_name)
+          return nil if collections.empty?
+
+          NonVerbalRenderer.new(collections: collections)
         end
 
         def process_bibliography(document, liquid_doc, match)
@@ -250,6 +281,21 @@ module Metanorma
           )
           entry = renderer.render_entry(concept)
           liquid_doc.add_content(entry) if entry
+        end
+
+        # Renders all dataset-level entities of a non-verbal kind
+        # (figures, tables, formulas) as AsciiDoc blocks. The directive
+        # shape is +glossarist::render_<kind>[dataset]+.
+        def process_non_verbal(liquid_doc, match)
+          @seen_glossarist = true
+          kind = :"#{match[1]}"
+          dataset_name = match[2].strip
+          collection = @registry.non_verbal_collection(dataset_name, kind)
+          return unless collection
+
+          renderer = NonVerbalRenderer.new(collections: { kind => collection })
+          rendered = renderer.render_kind(kind)
+          liquid_doc.add_content("\n#{rendered}") unless rendered.empty?
         end
 
         def relative_file_path(document, file_path)

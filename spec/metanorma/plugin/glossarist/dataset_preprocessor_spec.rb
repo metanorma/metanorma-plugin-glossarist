@@ -1043,6 +1043,94 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetPreprocessor do
           .not_to raise_error
       end
     end
+
+    context "[render non-verbal entities]" do
+      context "[render_figures]" do
+        let(:reader) do
+          Asciidoctor::Reader.new <<~TEMPLATE
+            :glossarist-dataset: dataset1:./spec/fixtures/dataset-glossarist-v3
+
+            glossarist::render_figures[dataset1]
+          TEMPLATE
+        end
+
+        it "renders every figure as an AsciiDoc image block" do
+          out = subject.process(document, reader).source
+          expect(out).to include("[[mixed-reflection]]")
+          expect(out).to include(".Mixed reflection")
+          expect(out).to include("image::figures/mixed-reflection.svg")
+        end
+      end
+
+      context "[render_tables]" do
+        let(:reader) do
+          Asciidoctor::Reader.new <<~TEMPLATE
+            :glossarist-dataset: dataset1:./spec/fixtures/dataset-glossarist-v3
+
+            glossarist::render_tables[dataset1]
+          TEMPLATE
+        end
+
+        it "renders every table as an AsciiDoc table block" do
+          out = subject.process(document, reader).source
+          expect(out).to include("[[unit-conversion]]")
+          expect(out).to include(".SI base units")
+          expect(out).to include("|===")
+          expect(out).to include("|metre |m |L")
+        end
+      end
+
+      context "[render_formulas]" do
+        let(:reader) do
+          Asciidoctor::Reader.new <<~TEMPLATE
+            :glossarist-dataset: dataset1:./spec/fixtures/dataset-glossarist-v3
+
+            glossarist::render_formulas[dataset1]
+          TEMPLATE
+        end
+
+        it "renders every formula as an AsciiDoc stem block" do
+          out = subject.process(document, reader).source
+          expect(out).to include("[[wave-equation]]")
+          expect(out).to include(".Electromagnetic wave equation")
+          expect(out).to include("[stem]")
+          expect(out).to include("++++")
+        end
+      end
+
+      context "[render_figures] on a dataset without non-verbal entities" do
+        let(:reader) do
+          Asciidoctor::Reader.new <<~TEMPLATE
+            :glossarist-dataset: dataset1:./spec/fixtures/dataset-glossarist-v2
+
+            glossarist::render_figures[dataset1]
+          TEMPLATE
+        end
+
+        it "emits nothing when the subdirectory is missing" do
+          out = subject.process(document, reader).source
+          expect(out.strip).to eq("")
+        end
+      end
+    end
+
+    context "[concept-attached non-verbal refs]" do
+      let(:reader) do
+        Asciidoctor::Reader.new <<~TEMPLATE
+          :glossarist-dataset: dataset1:./spec/fixtures/dataset-glossarist-v3
+
+          glossarist::render[dataset1, parent concept]
+        TEMPLATE
+      end
+
+      it "appends non-verbal blocks after the concept body" do
+        out = subject.process(document, reader).source
+        expect(out).to include("parent concept")
+        expect(out).to include("[[mixed-reflection]]")
+        expect(out).to include("[[unit-conversion]]")
+        expect(out).to include("[[wave-equation]]")
+      end
+    end
   end
 
   def absolute_path(path)

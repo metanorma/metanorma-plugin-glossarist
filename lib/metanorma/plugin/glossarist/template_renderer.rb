@@ -12,13 +12,17 @@ module Metanorma
           @template_cache = {}
         end
 
-        def render_concepts(concepts, depth:, anchor_prefix: nil)
+        def render_concepts(concepts, depth:, anchor_prefix: nil,
+                            non_verbal: nil)
           tree = build_concept_tree(concepts)
-          parts = tree.map { |c| render_tree_node(c, depth, anchor_prefix) }
+          parts = tree.map do |node|
+            render_tree_node(node, depth, anchor_prefix, non_verbal)
+          end
           normalize_whitespace(parts.join("\n\n"))
         end
 
-        def render_concept(concept, depth:, anchor_prefix: nil)
+        def render_concept(concept, depth:, anchor_prefix: nil,
+                           non_verbal: nil)
           l10n = concept.localization(@lang)
           context = {
             "concept" => concept.to_liquid,
@@ -28,6 +32,9 @@ module Metanorma
           }
           template_content = cached_template(concept)
           rendered = render_template(template_content, context)
+          if non_verbal
+            rendered += "\n\n#{non_verbal.render_concept_refs(concept)}"
+          end
           normalize_whitespace(rendered)
         end
 
@@ -41,12 +48,14 @@ module Metanorma
           end
         end
 
-        def render_tree_node((concept, children), depth, anchor_prefix)
+        def render_tree_node((concept, children), depth, anchor_prefix,
+                             non_verbal)
           result = render_concept(concept, depth: depth,
-                                           anchor_prefix: anchor_prefix)
+                                           anchor_prefix: anchor_prefix,
+                                           non_verbal: non_verbal)
           children.each do |child_node|
             result += "\n" + render_tree_node(child_node, depth + 1,
-                                              anchor_prefix)
+                                              anchor_prefix, non_verbal)
           end
           result
         end
