@@ -18,7 +18,7 @@ module Metanorma
         # @param register [Glossarist::DatasetRegister, nil] for cascading
         # @param renderer [TemplateRenderer] concept renderer
         # @param depth [Integer] base heading depth for sections
-        # @param options [Hash] :sort_by, :anchor_prefix
+        # @param options [Hash] :sort_by, :anchor_prefix, :non_verbal
         def initialize(dataset:, register:, renderer:, depth:, **options)
           @dataset = dataset
           @register = register
@@ -26,6 +26,7 @@ module Metanorma
           @depth = depth
           @sort_by = options[:sort_by] || DEFAULT_SORT_BY
           @anchor_prefix = options[:anchor_prefix]
+          @non_verbal = options[:non_verbal]
         end
 
         # @param sections [Array<Glossarist::Section>]
@@ -55,7 +56,8 @@ module Metanorma
           heading = "#{'=' * (@depth + 1)} #{section.name || section.id}"
           body = @renderer.render_concepts(concepts,
                                            depth: @depth + 1,
-                                           anchor_prefix: @anchor_prefix)
+                                           anchor_prefix: @anchor_prefix,
+                                           non_verbal: @non_verbal)
           "#{heading}\n\n#{body}"
         end
       end

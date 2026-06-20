@@ -1,0 +1,26 @@
+id: mixed-reflection
+identifier: "Figure 1"
+caption:
+  eng: Mixed reflection
+  fra: "Réflexion mixte"
+alt:
+  eng: Diagram showing mixed reflection
+description:
+  eng: Light ray interacting with a partially reflecting surface.
+images:
+  - src: figures/mixed-reflection.svg
+    format: svg
+    role: vector
+  - src: figures/mixed-reflection.png
+    format: png
+    role: raster
+    width: 1600
+    height: 1200
+sources:
+  - type: authoritative
+    origin:
+      ref:
+        source: ievtermbank
+      locality:
+        type: clause
+        reference_from: 845-04-58

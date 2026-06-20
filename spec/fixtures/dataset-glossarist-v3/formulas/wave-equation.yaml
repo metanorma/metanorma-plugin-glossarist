@@ -1,0 +1,11 @@
+id: wave-equation
+identifier: "Equation 1"
+caption:
+  eng: Electromagnetic wave equation
+alt:
+  eng: Second-order partial differential equation for the E-field
+description:
+  eng: Describes wave propagation in free space.
+expression:
+  eng: "\\nabla^2 \\mathbf{E} = \\mu_0 \\epsilon_0 \\frac{\\partial^2 \\mathbf{E}}{\\partial t^2}"
+notation: latex
