@@ -169,4 +169,83 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetRegistry do
       expect(registry.bibliography_for("unknown")).to be_nil
     end
   end
+
+  describe "#non_verbal_collection" do
+    it "loads a FigureCollection from a V3 dataset" do
+      registry = described_class.new
+      registry.register(document_double, "ds:#{v3_path}")
+      coll = registry.non_verbal_collection("ds", :figures)
+      expect(coll).to be_a(Glossarist::Collections::FigureCollection)
+      expect(coll.ids).to include("mixed-reflection")
+    end
+
+    it "loads a TableCollection from a V3 dataset" do
+      registry = described_class.new
+      registry.register(document_double, "ds:#{v3_path}")
+      coll = registry.non_verbal_collection("ds", :tables)
+      expect(coll).to be_a(Glossarist::Collections::TableCollection)
+      expect(coll.ids).to include("unit-conversion")
+    end
+
+    it "loads a FormulaCollection from a V3 dataset" do
+      registry = described_class.new
+      registry.register(document_double, "ds:#{v3_path}")
+      coll = registry.non_verbal_collection("ds", :formulas)
+      expect(coll).to be_a(Glossarist::Collections::FormulaCollection)
+      expect(coll.ids).to include("wave-equation")
+    end
+
+    it "returns nil when the subdirectory is absent" do
+      registry = described_class.new
+      registry.register(document_double, "ds:#{v2_path}")
+      expect(registry.non_verbal_collection("ds", :figures)).to be_nil
+    end
+
+    it "raises ArgumentError for an unknown kind" do
+      registry = described_class.new
+      registry.register(document_double, "ds:#{v3_path}")
+      expect do
+        registry.non_verbal_collection("ds", :bogus)
+      end.to raise_error(ArgumentError, /unknown non-verbal kind/)
+    end
+
+    it "caches collections across calls" do
+      registry = described_class.new
+      registry.register(document_double, "ds:#{v3_path}")
+      first = registry.non_verbal_collection("ds", :figures)
+      second = registry.non_verbal_collection("ds", :figures)
+      expect(first).to equal(second)
+    end
+  end
+
+  describe "dynamic accessors" do
+    it "exposes figures_for, tables_for, formulas_for methods" do
+      registry = described_class.new
+      registry.register(document_double, "ds:#{v3_path}")
+      expect(registry.figures_for("ds")).to be_a(Glossarist::Collections::FigureCollection)
+      expect(registry.tables_for("ds")).to be_a(Glossarist::Collections::TableCollection)
+      expect(registry.formulas_for("ds")).to be_a(Glossarist::Collections::FormulaCollection)
+    end
+  end
+
+  describe "#non_verbal_collections" do
+    it "returns a hash of all available kinds" do
+      registry = described_class.new
+      registry.register(document_double, "ds:#{v3_path}")
+      hash = registry.non_verbal_collections("ds")
+      expect(hash.keys).to contain_exactly(:figures, :tables, :formulas)
+      expect(hash[:figures]).to be_a(Glossarist::Collections::FigureCollection)
+    end
+
+    it "returns empty hash when no subdirectories exist" do
+      registry = described_class.new
+      registry.register(document_double, "ds:#{v2_path}")
+      expect(registry.non_verbal_collections("ds")).to eq({})
+    end
+
+    it "returns empty hash for unregistered context" do
+      registry = described_class.new
+      expect(registry.non_verbal_collections("missing")).to eq({})
+    end
+  end
 end
