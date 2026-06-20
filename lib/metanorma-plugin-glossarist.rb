@@ -21,6 +21,10 @@ module Metanorma
       autoload :Document, "metanorma/plugin/glossarist/document"
       autoload :Liquid, "metanorma/plugin/glossarist/liquid"
       autoload :LiquidRendering, "metanorma/plugin/glossarist/liquid_rendering"
+      autoload :NonVerbalFormatters,
+               "metanorma/plugin/glossarist/non_verbal_formatters"
+      autoload :NonVerbalRenderer,
+               "metanorma/plugin/glossarist/non_verbal_renderer"
       autoload :Sanitize, "metanorma/plugin/glossarist/sanitize"
       autoload :SectionCascade, "metanorma/plugin/glossarist/section_cascade"
       autoload :SectionFilter, "metanorma/plugin/glossarist/section_filter"
