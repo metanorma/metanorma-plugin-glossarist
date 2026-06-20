@@ -8,17 +8,28 @@ module Metanorma
       # Resolves, caches, and exposes dataset models for a document.
       #
       # Single source of truth for everything the preprocessor needs from a
-      # glossarist dataset: concepts, section hierarchy, and bibliography.
+      # glossarist dataset: concepts, section hierarchy, bibliography, and
+      # dataset-level non-verbal entities (figures, tables, formulas).
       # Each is exposed as the typed Glossarist model object so callers
       # never poke at raw YAML hashes.
       class DatasetRegistry
         BIBLIOGRAPHY_FILENAME = "bibliography.yaml"
         REGISTER_FILENAME = "register.yaml"
 
+        # Map of plural kind symbol → (collection class, subdirectory name).
+        # Adding a new non-verbal kind = adding one entry here. The accessor
+        # `{kind}_for` and loader are derived from this table.
+        NON_VERBAL_KINDS = {
+          figures: [::Glossarist::Collections::FigureCollection, "figures"],
+          tables: [::Glossarist::Collections::TableCollection, "tables"],
+          formulas: [::Glossarist::Collections::FormulaCollection, "formulas"],
+        }.freeze
+
         def initialize
           @stores = {}
           @registers = {}
           @bibliographies = {}
+          @non_verbal = {}
           @context_paths = {}
         end
 
@@ -81,6 +92,38 @@ module Metanorma
           store_for(path).concepts
         end
 
+        # Returns the typed NonVerbalCollection for a registered context
+        # (e.g. FigureCollection), or nil if the dataset has no such
+        # subdirectory. +kind+ is one of the keys of NON_VERBAL_KINDS.
+        def non_verbal_collection(context_name, kind)
+          unless NON_VERBAL_KINDS.key?(kind)
+            raise ArgumentError, "unknown non-verbal kind: #{kind.inspect}"
+          end
+
+          path = @context_paths[context_name]
+          return nil unless path
+
+          collection_class, subdir = NON_VERBAL_KINDS.fetch(kind)
+          non_verbal_at(path, kind, subdir, collection_class)
+        end
+
+        NON_VERBAL_KINDS.each_key do |kind|
+          define_method("#{kind}_for") do |context_name|
+            non_verbal_collection(context_name, kind)
+          end
+        end
+
+        # Returns all available non-verbal collections for a context as a
+        # hash keyed by kind symbol (e.g. +{ figures: FigureCollection }+).
+        # Kinds whose subdirectory doesn't exist are omitted. Convenient
+        # for building a NonVerbalRenderer in one call.
+        def non_verbal_collections(context_name)
+          NON_VERBAL_KINDS.each_with_object({}) do |(kind, _), memo|
+            collection = non_verbal_collection(context_name, kind)
+            memo[kind] = collection if collection
+          end
+        end
+
         private
 
         def concepts_for(context_name)
@@ -106,6 +149,14 @@ module Metanorma
             file = File.join(path, BIBLIOGRAPHY_FILENAME)
             ::Glossarist::BibliographyData.from_file(file)
           end
+        end
+
+        def non_verbal_at(path, kind, subdir, collection_class)
+          dir = File.join(path, subdir)
+          return nil unless File.directory?(dir)
+
+          @non_verbal[path] ||= {}
+          @non_verbal[path][kind] ||= collection_class.from_directory(dir)
         end
 
         def relative_file_path(document, file_path)
