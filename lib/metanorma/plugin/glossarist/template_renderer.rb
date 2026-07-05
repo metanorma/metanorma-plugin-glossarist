@@ -9,7 +9,6 @@ module Metanorma
         def initialize(file_system:, lang: "eng")
           @file_system = file_system
           @lang = lang
-          @template_cache = {}
         end
 
         def render_concepts(concepts, depth:, anchor_prefix: nil,
@@ -30,8 +29,7 @@ module Metanorma
             "depth_marker" => "=" * (depth + 1),
             "anchor" => build_anchor(concept.data.id.to_s, anchor_prefix),
           }
-          template_content = cached_template(concept)
-          rendered = render_template(template_content, context)
+          rendered = render_template(File.read(DEFAULT_TEMPLATE), context)
           if non_verbal
             rendered += "\n\n#{non_verbal.render_concept_refs(concept)}"
           end
@@ -39,14 +37,6 @@ module Metanorma
         end
 
         private
-
-        def cached_template(concept)
-          version = concept.schema_version
-          @template_cache[version] ||= begin
-            path = File.join(TEMPLATES_DIR, "_concept_#{version}.liquid")
-            File.exist?(path) ? File.read(path) : File.read(DEFAULT_TEMPLATE)
-          end
-        end
 
         def render_tree_node((concept, children), depth, anchor_prefix,
                              non_verbal)
