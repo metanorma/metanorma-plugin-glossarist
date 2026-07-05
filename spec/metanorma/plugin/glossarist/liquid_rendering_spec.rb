@@ -20,12 +20,12 @@ RSpec.describe Metanorma::Plugin::Glossarist::LiquidRendering do
     end
 
     it "wires the dataset_registry into template registers when provided" do
-      sentinel = Class.new(::Liquid::Tag) do
+      sentinel = Class.new(Liquid::Tag) do
         def render(context)
           "registry:#{context.registers[:dataset_registry].object_id}"
         end
       end
-      ::Liquid::Environment.default.register_tag("sentinel", sentinel)
+      Liquid::Environment.default.register_tag("sentinel", sentinel)
       registry = Object.new
 
       out = described_class.render("{% sentinel %}",
@@ -34,13 +34,13 @@ RSpec.describe Metanorma::Plugin::Glossarist::LiquidRendering do
                                    registry: registry)
       expect(out).to eq("registry:#{registry.object_id}")
     ensure
-      ::Liquid::Environment.default.tags.delete("sentinel")
+      Liquid::Environment.default.tags.delete("sentinel")
     end
 
     it "re-raises the first Liquid error when rendering fails" do
       broken = "{% undefined_tag_foo_bar %}"
       expect { described_class.render(broken, include_paths: []) }
-        .to raise_error(::Liquid::Error)
+        .to raise_error(Liquid::Error)
     end
   end
 end
