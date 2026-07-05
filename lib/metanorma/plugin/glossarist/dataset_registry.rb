@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "glossarist"
-
 module Metanorma
   module Plugin
     module Glossarist
