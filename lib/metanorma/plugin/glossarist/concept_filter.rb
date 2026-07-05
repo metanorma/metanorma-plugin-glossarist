@@ -20,6 +20,7 @@ module Metanorma
         def initialize(filters)
           @filters = filters || {}
           @resolver = ConceptPathResolver.new
+          @field_filters = build_field_filters
         end
 
         # Applies all configured filters in canonical order.
@@ -38,15 +39,18 @@ module Metanorma
                                        register)
           end
           result = filter_by_tag(result) if @filters.key?("tag")
-          result = filter_by_field(result) if field_filters?
+          result = filter_by_field(result) unless @field_filters.empty?
           result = sort(result) if @filters.key?("sort_by")
           result
         end
 
         private
 
-        def field_filters?
-          (@filters.keys - COLLECTION_FILTERS).any?
+        def build_field_filters
+          field_keys = @filters.keys - COLLECTION_FILTERS
+          field_keys.map do |key|
+            FieldFilter.from_options_entry(key, @filters[key])
+          end
         end
 
         def filter_by_lang(collection)
@@ -103,32 +107,9 @@ module Metanorma
         end
 
         def filter_by_field(collection)
-          path, value, start_with = field_filter_spec
-          start_with_match_value = extract_start_with_value(path, value)
-          path, match_value = if start_with_match_value
-                                [start_with_match_value[:path],
-                                 start_with_match_value[:value]]
-                              else
-                                [path, value]
-                              end
-
           collection.select do |concept|
-            actual = @resolver.resolve(concept, path)
-            start_with ? actual&.start_with?(match_value) : actual == value
+            @field_filters.all? { |filter| filter.match?(@resolver, concept) }
           end
-        end
-
-        def field_filter_spec
-          path = (@filters.keys - COLLECTION_FILTERS).first
-          start_with = path.include?(".start_with(")
-          [path, @filters[path], start_with]
-        end
-
-        def extract_start_with_value(path, _value)
-          match = path.match(/^([^.]+(?:\.[^.]+)*)\.start_with\(([^)]+)\)$/)
-          return nil unless match
-
-          { path: match[1], value: match[2] }
         end
       end
     end
