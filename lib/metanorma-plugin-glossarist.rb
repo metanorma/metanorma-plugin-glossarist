@@ -19,6 +19,7 @@ module Metanorma
                "metanorma/plugin/glossarist/dataset_preprocessor"
       autoload :DatasetRegistry, "metanorma/plugin/glossarist/dataset_registry"
       autoload :Document, "metanorma/plugin/glossarist/document"
+      autoload :FieldFilter, "metanorma/plugin/glossarist/field_filter"
       autoload :Liquid, "metanorma/plugin/glossarist/liquid"
       autoload :LiquidRendering, "metanorma/plugin/glossarist/liquid_rendering"
       autoload :MentionExtractor,

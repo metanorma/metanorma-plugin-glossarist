@@ -110,6 +110,24 @@ RSpec.describe Metanorma::Plugin::Glossarist::ConceptFilter do
         result = filter.apply(all_concepts)
         expect(result.map(&:default_designation)).to eq(["entity"])
       end
+
+      it "applies multiple field filters together (AND semantics)" do
+        filter = described_class.new({
+                                       "data.localizations['eng'].data.terms[0].designation.start_with(enti)" => nil,
+                                       "data.identifier" => "3.1.1.1",
+                                     })
+        result = filter.apply(all_concepts)
+        expect(result.map(&:default_designation)).to eq(["entity"])
+      end
+
+      it "returns empty when one of multiple field filters does not match" do
+        filter = described_class.new({
+                                       "data.localizations['eng'].data.terms[0].designation.start_with(enti)" => nil,
+                                       "data.identifier" => "nonexistent",
+                                     })
+        result = filter.apply(all_concepts)
+        expect(result).to be_empty
+      end
     end
 
     describe "section filter" do
