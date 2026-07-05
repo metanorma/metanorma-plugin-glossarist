@@ -31,7 +31,7 @@ module Metanorma
 
             @contexts.each do |local_context|
               path = local_context[:file_path].strip
-              collection = registry ? registry.concepts_at(path) : load_collection(path)
+              collection = concepts_for(registry, path)
               filtered = ConceptFilter.new(@raw_filters).apply(collection)
               context[local_context[:name]] = filtered.map do |c|
                 ManagedConceptDrop.new(c)
@@ -51,10 +51,14 @@ module Metanorma
             end
           end
 
-          def load_collection(folder_path)
-            collection = ::Glossarist::ManagedConceptCollection.new
-            collection.load_from_files(folder_path)
-            collection
+          def concepts_for(registry, path)
+            return registry.concepts_at(path) if registry
+
+            fallback_store(path).concepts
+          end
+
+          def fallback_store(path)
+            ::Glossarist::GlossaryStore.new.load_directory(path)
           end
         end
       end
