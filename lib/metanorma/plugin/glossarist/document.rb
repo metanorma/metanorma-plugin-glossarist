@@ -10,19 +10,18 @@ module Metanorma
           @content = []
         end
 
-        def add_content(content, options = {})
-          @content << if options[:render]
-                        LiquidRendering.render(
-                          content,
-                          include_paths: [file_system,
-                                          TEMPLATES_DIR,
-                                          options[:template]].compact,
-                          patterns: LiquidRendering::DOCUMENT_PATTERNS,
-                          registry: registry,
-                        )
-                      else
-                        content
-                      end
+        def add_raw(content)
+          @content << content
+        end
+
+        def add_rendered(content, template: nil)
+          include_paths = [file_system, TEMPLATES_DIR, template].compact
+          @content << LiquidRendering.render(
+            content,
+            include_paths: include_paths,
+            patterns: LiquidRendering::DOCUMENT_PATTERNS,
+            registry: registry,
+          )
         end
 
         def to_s
