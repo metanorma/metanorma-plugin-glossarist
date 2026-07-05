@@ -21,6 +21,8 @@ module Metanorma
       autoload :Document, "metanorma/plugin/glossarist/document"
       autoload :Liquid, "metanorma/plugin/glossarist/liquid"
       autoload :LiquidRendering, "metanorma/plugin/glossarist/liquid_rendering"
+      autoload :MentionExtractor,
+               "metanorma/plugin/glossarist/mention_extractor"
       autoload :NonVerbalFormatters,
                "metanorma/plugin/glossarist/non_verbal_formatters"
       autoload :NonVerbalRenderer,

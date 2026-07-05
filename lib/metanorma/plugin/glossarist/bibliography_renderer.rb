@@ -111,7 +111,7 @@ module Metanorma
           l10n.examples&.each { |e| parts << e.content.to_s }
           return [] if parts.empty?
 
-          Sanitize.extract_xrefs(parts.join(" "))
+          MentionExtractor.new(parts.join(" ")).bibliography_ids
         end
       end
     end
