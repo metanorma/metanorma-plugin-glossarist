@@ -1,0 +1,16 @@
+data:
+  language_code: eng
+  terms:
+  - designation: nested example concept
+    normative_status: preferred
+    type: expression
+  definition:
+  - content: a concept demonstrating VIM 1993 nested examples
+  notes:
+  - content: This note contains nested examples.
+    examples:
+    - content: First nested example inside a note.
+    - content: Second nested example inside a note.
+  examples:
+  - content: Top-level example.
+id: nest-eng

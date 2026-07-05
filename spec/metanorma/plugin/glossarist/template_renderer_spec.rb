@@ -85,5 +85,38 @@ RSpec.describe Metanorma::Plugin::Glossarist::TemplateRenderer do
       expect(parent_idx).to be < child_idx
       expect(result).to match(/=== parent concept.*==== child concept/m)
     end
+
+    it "renders nested examples inside notes (VIM 1993)" do
+      yaml = <<~YAML
+        data:
+          language_code: eng
+          terms:
+          - designation: nested example concept
+            normative_status: preferred
+            type: expression
+          definition:
+          - content: top-level definition
+          notes:
+          - content: outer note
+            examples:
+            - content: inner example 1
+            - content: inner example 2
+        id: nest-eng
+      YAML
+      lc = Glossarist::LocalizedConcept.from_yaml(yaml)
+      mc_data = Glossarist::ManagedConceptData.from_yaml(
+        "id: nest\nlocalized_concepts:\n  eng: nest-eng\n",
+      )
+      mc = Glossarist::ManagedConcept.new(data: mc_data)
+      mc.add_localization(lc)
+
+      result = renderer.render_concept(mc, depth: 2)
+      expect(result).to include("outer note")
+      expect(result).to include("inner example 1")
+      expect(result).to include("inner example 2")
+      note_idx = result.index("outer note")
+      ex1_idx = result.index("inner example 1")
+      expect(ex1_idx).to be > note_idx
+    end
   end
 end
