@@ -108,14 +108,13 @@ module Metanorma
           if (match = current_line.match(BIB_ANCHOR_REGEX))
             @existing_bib_anchors << match[1]
           end
-          liquid_doc.add_content(current_line)
+          liquid_doc.add_raw(current_line)
         end
 
         def process_dataset_tag(document, input_lines, liquid_doc, match)
           @seen_glossarist = true
           @registry.register(document, match[1])
-          liquid_doc.add_content(prepare_document(document, input_lines).to_s,
-                                 render: false)
+          liquid_doc.add_raw(prepare_document(document, input_lines).to_s)
         end
 
         def process_glossarist_block(document, liquid_doc, input_lines, match)
@@ -129,9 +128,11 @@ module Metanorma
             {% endwith_glossarist_context %}
           SECTION
 
-          options = { render: true }
-          options[:template] = template if template
-          liquid_doc.add_content(section, options)
+          if template
+            liquid_doc.add_rendered(section, template: template)
+          else
+            liquid_doc.add_rendered(section)
+          end
         end
 
         def prepare_glossarist_block_params(document, match)
@@ -175,7 +176,7 @@ module Metanorma
                                              depth: @title_depth,
                                              anchor_prefix: options["anchor-prefix"],
                                              non_verbal: non_verbal_for(context_name))
-          liquid_doc.add_content("\n#{rendered}")
+          liquid_doc.add_raw("\n#{rendered}")
         end
 
         RENDER_OPTIONS = %w[anchor-prefix].freeze
@@ -198,7 +199,7 @@ module Metanorma
                                               depth: @title_depth,
                                               anchor_prefix: options["anchor-prefix"],
                                               non_verbal: non_verbal_for(context_name))
-          liquid_doc.add_content("\n#{rendered}")
+          liquid_doc.add_raw("\n#{rendered}")
         end
 
         def process_import_sections_tag(_document, liquid_doc, match)
@@ -215,7 +216,7 @@ module Metanorma
           return unless dataset
 
           parts = render_sections(dataset, register, sections, context_name, options)
-          liquid_doc.add_content("\n#{parts.join("\n\n")}")
+          liquid_doc.add_raw("\n#{parts.join("\n\n")}")
         end
 
         def render_sections(dataset, register, sections, context_name, options)
@@ -266,7 +267,7 @@ module Metanorma
             existing_anchors: @existing_bib_anchors,
             bibliography: @registry.bibliography_for(dataset_name),
           )
-          liquid_doc.add_content(renderer.render_all(concepts))
+          liquid_doc.add_raw(renderer.render_all(concepts))
         end
 
         def process_bibliography_entry(document, liquid_doc, match)
@@ -280,7 +281,7 @@ module Metanorma
             bibliography: @registry.bibliography_for(dataset_name),
           )
           entry = renderer.render_entry(concept)
-          liquid_doc.add_content(entry) if entry
+          liquid_doc.add_raw(entry) if entry
         end
 
         # Renders all dataset-level entities of a non-verbal kind
@@ -295,7 +296,7 @@ module Metanorma
 
           renderer = NonVerbalRenderer.new(collections: { kind => collection })
           rendered = renderer.render_kind(kind)
-          liquid_doc.add_content("\n#{rendered}") unless rendered.empty?
+          liquid_doc.add_raw("\n#{rendered}") unless rendered.empty?
         end
 
         def relative_file_path(document, file_path)

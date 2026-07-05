@@ -16,7 +16,10 @@ module Metanorma
             Liquid::LocalFileSystem.new(include_paths, patterns)
           template.registers[:dataset_registry] = registry if registry
           rendered = template.render(assigns)
-          raise template.errors.first.cause if template.errors.any?
+          if template.errors.any?
+            error = template.errors.first
+            raise error.cause || error
+          end
 
           rendered
         end
