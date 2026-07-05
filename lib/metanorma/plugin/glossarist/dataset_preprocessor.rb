@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
-require "asciidoctor"
 require "asciidoctor/reader"
-require "glossarist"
 
 module Metanorma
   module Plugin
