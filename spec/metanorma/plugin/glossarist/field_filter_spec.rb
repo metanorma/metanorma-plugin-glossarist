@@ -27,7 +27,8 @@ RSpec.describe Metanorma::Plugin::Glossarist::FieldFilter do
     end
 
     it "treats start_with value as the literal pattern even when hash value present" do
-      ff = described_class.from_options_entry("data.name.start_with(zz)", "ignored")
+      ff = described_class.from_options_entry("data.name.start_with(zz)",
+                                              "ignored")
       expect(ff.matcher).to eq(:start_with)
       expect(ff.value).to eq("zz")
     end

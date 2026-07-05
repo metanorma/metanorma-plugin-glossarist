@@ -5,11 +5,11 @@ RSpec.describe Metanorma::Plugin::Glossarist::Liquid::PolyfillIndexedAccess do
     it "includes Lutaml::Model::Liquid::IndexedAccess into glossarist collections" do
       described_class.apply!
       expect(Glossarist::Collections::LocalizationCollection)
-        .to include(::Lutaml::Model::Liquid::IndexedAccess)
+        .to include(Lutaml::Model::Liquid::IndexedAccess)
       expect(Glossarist::Collections::DetailedDefinitionCollection)
-        .to include(::Lutaml::Model::Liquid::IndexedAccess)
+        .to include(Lutaml::Model::Liquid::IndexedAccess)
       expect(Glossarist::Collections::ConceptSourceCollection)
-        .to include(::Lutaml::Model::Liquid::IndexedAccess)
+        .to include(Lutaml::Model::Liquid::IndexedAccess)
     end
 
     it "is idempotent — running twice does not re-include" do
