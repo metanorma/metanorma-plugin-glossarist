@@ -11,7 +11,8 @@ data:
   examples:
   - content: This is an example.
   annotations:
-  - content: This concept is used as a parent in the test hierarchy.
+  - content: This concept is used as a parent in the test hierarchy. See <<iso_9999>>
+      for context.
   sources:
   - origin:
       ref:
