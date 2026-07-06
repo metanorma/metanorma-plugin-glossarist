@@ -109,6 +109,7 @@ module Metanorma
           l10n.definition&.each { |d| parts << d.content.to_s }
           l10n.notes&.each { |n| parts << n.content.to_s }
           l10n.examples&.each { |e| parts << e.content.to_s }
+          l10n.data.annotations&.each { |a| parts << a.content.to_s }
           return [] if parts.empty?
 
           MentionExtractor.new(parts.join(" ")).bibliography_ids

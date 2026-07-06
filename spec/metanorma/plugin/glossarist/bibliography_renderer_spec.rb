@@ -136,14 +136,17 @@ RSpec.describe Metanorma::Plugin::Glossarist::BibliographyRenderer do
       v3_collection = Glossarist::ManagedConceptCollection.new
       v3_collection.load_from_files("./spec/fixtures/dataset-glossarist-v3")
       concept = v3_collection.find { |c| c.data&.id == "1.1" }
-      l10n = concept.localization("eng")
 
-      annotations = l10n.data.annotations
-      skip "V3 annotations not parsed by this glossarist version" if annotations.empty?
+      annotations = concept.localization("eng").data.annotations
+      expect(annotations).not_to be_empty,
+                                 "V3 annotations failed to parse — check glossarist version"
 
-      renderer = described_class.new
-      xrefs = renderer.send(:extract_content_xrefs, l10n)
-      expect(xrefs).to include("ievtermbank")
+      bibliography = bibliography_with(
+        [{ "id" => "iso_9999", "reference" => "ISO 9999", "title" => "Test" }],
+      )
+      renderer = described_class.new(bibliography: bibliography)
+      output = renderer.render_all([concept])
+      expect(output).to include("[[[iso_9999,ISO 9999")
     end
 
     it "includes title from bibliography in formatted entry" do
