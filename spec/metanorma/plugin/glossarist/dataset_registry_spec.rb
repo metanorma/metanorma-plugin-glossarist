@@ -171,34 +171,42 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetRegistry do
   end
 
   describe "#non_verbal_collection" do
-    it "loads a FigureCollection from a V3 dataset" do
+    it "loads figures from a V3 dataset via GlossaryStore" do
       registry = described_class.new
       registry.register(document_double, "ds:#{v3_path}")
       coll = registry.non_verbal_collection("ds", :figures)
-      expect(coll).to be_a(Glossarist::Collections::FigureCollection)
-      expect(coll.ids).to include("mixed-reflection")
+      expect(coll).to be_an(Array)
+      expect(coll).to all(be_a(Glossarist::Figure))
+      expect(coll.map(&:id)).to include("mixed-reflection")
     end
 
-    it "loads a TableCollection from a V3 dataset" do
+    it "loads tables from a V3 dataset via GlossaryStore" do
       registry = described_class.new
       registry.register(document_double, "ds:#{v3_path}")
       coll = registry.non_verbal_collection("ds", :tables)
-      expect(coll).to be_a(Glossarist::Collections::TableCollection)
-      expect(coll.ids).to include("unit-conversion")
+      expect(coll).to be_an(Array)
+      expect(coll).to all(be_a(Glossarist::Table))
+      expect(coll.map(&:id)).to include("unit-conversion")
     end
 
-    it "loads a FormulaCollection from a V3 dataset" do
+    it "loads formulas from a V3 dataset via GlossaryStore" do
       registry = described_class.new
       registry.register(document_double, "ds:#{v3_path}")
       coll = registry.non_verbal_collection("ds", :formulas)
-      expect(coll).to be_a(Glossarist::Collections::FormulaCollection)
-      expect(coll.ids).to include("wave-equation")
+      expect(coll).to be_an(Array)
+      expect(coll).to all(be_a(Glossarist::Formula))
+      expect(coll.map(&:id)).to include("wave-equation")
     end
 
-    it "returns nil when the subdirectory is absent" do
+    it "returns an empty Array when the subdirectory is absent" do
       registry = described_class.new
       registry.register(document_double, "ds:#{v2_path}")
-      expect(registry.non_verbal_collection("ds", :figures)).to be_nil
+      expect(registry.non_verbal_collection("ds", :figures)).to eq([])
+    end
+
+    it "returns nil when the context is unregistered" do
+      registry = described_class.new
+      expect(registry.non_verbal_collection("missing", :figures)).to be_nil
     end
 
     it "raises ArgumentError for an unknown kind" do
@@ -209,7 +217,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetRegistry do
       end.to raise_error(ArgumentError, /unknown non-verbal kind/)
     end
 
-    it "caches collections across calls" do
+    it "caches collections across calls via GlossaryStore" do
       registry = described_class.new
       registry.register(document_double, "ds:#{v3_path}")
       first = registry.non_verbal_collection("ds", :figures)
@@ -222,9 +230,9 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetRegistry do
     it "exposes figures_for, tables_for, formulas_for methods" do
       registry = described_class.new
       registry.register(document_double, "ds:#{v3_path}")
-      expect(registry.figures_for("ds")).to be_a(Glossarist::Collections::FigureCollection)
-      expect(registry.tables_for("ds")).to be_a(Glossarist::Collections::TableCollection)
-      expect(registry.formulas_for("ds")).to be_a(Glossarist::Collections::FormulaCollection)
+      expect(registry.figures_for("ds")).to be_an(Array)
+      expect(registry.tables_for("ds")).to be_an(Array)
+      expect(registry.formulas_for("ds")).to be_an(Array)
     end
   end
 
@@ -234,7 +242,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetRegistry do
       registry.register(document_double, "ds:#{v3_path}")
       hash = registry.non_verbal_collections("ds")
       expect(hash.keys).to contain_exactly(:figures, :tables, :formulas)
-      expect(hash[:figures]).to be_a(Glossarist::Collections::FigureCollection)
+      expect(hash[:figures]).to be_an(Array)
     end
 
     it "returns empty hash when no subdirectories exist" do

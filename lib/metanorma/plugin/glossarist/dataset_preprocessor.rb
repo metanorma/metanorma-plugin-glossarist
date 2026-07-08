@@ -290,7 +290,7 @@ module Metanorma
           kind = :"#{match[1]}"
           dataset_name = match[2].strip
           collection = @registry.non_verbal_collection(dataset_name, kind)
-          return unless collection
+          return if collection.nil? || collection.empty?
 
           renderer = NonVerbalRenderer.new(collections: { kind => collection })
           rendered = renderer.render_kind(kind)
