@@ -11,6 +11,12 @@ module Metanorma
       # Per-kind formatting is delegated to a formatter class registered
       # in +FORMATTERS+. Adding a new kind = adding one formatter class
       # and one entry here; the dispatcher itself never changes shape.
+      #
+      # Collections are +Array<Figure|Table|Formula>+ as returned by
+      # +GlossaryStore#figures/#tables/#formulas+. Lookups by id
+      # (for concept→entity refs) use a lazily-built index that includes
+      # Figure subfigures, preserving the recursive +Figure#find_by_id+
+      # semantics of the previous Collection-based path.
       class NonVerbalRenderer
         FORMATTERS = {
           figures: NonVerbalFormatters::Figure,
@@ -18,13 +24,14 @@ module Metanorma
           formulas: NonVerbalFormatters::Formula,
         }.freeze
 
-        # @param collections [Hash{Symbol => NonVerbalCollection, nil}]
+        # @param collections [Hash{Symbol => Array<NonVerbalEntity>, nil}]
         #   one entry per non-verbal kind, e.g.
-        #   `{ figures: FigureCollection, tables: ..., formulas: ... }`.
+        #   `{ figures: Array<Glossarist::Figure>, ... }`.
         #   Missing or nil entries are silently skipped.
         def initialize(collections:, lang: "eng")
           @collections = collections
           @lang = lang
+          @indices = {}
         end
 
         # Render every entity in the named collection.
@@ -32,11 +39,10 @@ module Metanorma
         # @param kind [Symbol] key in FORMATTERS (e.g. +:figures+)
         # @return [String] AsciiDoc blocks joined by blank lines, or ""
         def render_kind(kind)
-          collection = @collections[kind]
-          return "" if collection.nil? || collection.entries.empty?
+          entities = @collections[kind]
+          return "" if entities.nil? || entities.empty?
 
-          entries = collection.entries
-          "#{entries.map { |e| format_one(kind, e) }.join("\n\n")}\n"
+          "#{entities.map { |e| format_one(kind, e) }.join("\n\n")}\n"
         end
 
         # Render the non-verbal entities referenced by a concept's
@@ -61,10 +67,7 @@ module Metanorma
         private
 
         def render_ref(kind, ref)
-          collection = @collections[kind]
-          return nil unless collection
-
-          entity = collection.by_id(ref.entity_id)
+          entity = index_for(kind)[ref.entity_id]
           return nil unless entity
 
           format_one(kind, entity)
@@ -77,6 +80,27 @@ module Metanorma
         def concept_refs(concept, kind)
           refs = concept.data&.public_send(kind)
           Array(refs)
+        end
+
+        # Lazily builds and caches a {id => entity} index for the named
+        # kind. Figures include their subfigures recursively; other kinds
+        # are flat by id. Returns {} for missing/empty collections so
+        # lookups naturally return nil.
+        def index_for(kind)
+          @indices[kind] ||= build_index(@collections[kind])
+        end
+
+        def build_index(entities)
+          return {} if entities.nil? || entities.empty?
+
+          entities.each_with_object({}) { |e, h| index_entity(h, e) }
+        end
+
+        def index_entity(index, entity)
+          index[entity.id] = entity
+          return unless entity.is_a?(::Glossarist::Figure)
+
+          Array(entity.subfigures).each { |sub| index_entity(index, sub) }
         end
       end
     end

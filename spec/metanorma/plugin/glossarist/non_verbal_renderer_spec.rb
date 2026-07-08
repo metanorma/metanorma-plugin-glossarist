@@ -6,22 +6,25 @@ RSpec.describe Metanorma::Plugin::Glossarist::NonVerbalRenderer do
   end
   let(:all_collections) do
     {
-      figures: collection_for(:figures),
-      tables: collection_for(:tables),
-      formulas: collection_for(:formulas),
+      figures: entities_for(:figures),
+      tables: entities_for(:tables),
+      formulas: entities_for(:formulas),
     }
   end
 
-  def collection_class_for(kind)
-    {
-      figures: Glossarist::Collections::FigureCollection,
-      tables: Glossarist::Collections::TableCollection,
-      formulas: Glossarist::Collections::FormulaCollection,
-    }.fetch(kind)
+  # Mirror DatasetRegistry's production path: ask GlossaryStore for the
+  # lazy Array<Figure|Table|Formula>. This keeps the spec honest about
+  # the real public API the renderer consumes.
+  def store
+    @store ||= begin
+      s = Glossarist::GlossaryStore.new
+      s.load_directory(v3_path)
+      s
+    end
   end
 
-  def collection_for(kind)
-    collection_class_for(kind).from_directory(File.join(v3_path, kind.to_s))
+  def entities_for(kind)
+    store.public_send(kind)
   end
 
   describe "#render_kind" do
@@ -50,6 +53,11 @@ RSpec.describe Metanorma::Plugin::Glossarist::NonVerbalRenderer do
 
     it "returns empty string when collection is nil" do
       renderer = described_class.new(collections: {})
+      expect(renderer.render_kind(:figures)).to eq("")
+    end
+
+    it "returns empty string when collection is an empty Array" do
+      renderer = described_class.new(collections: { figures: [] })
       expect(renderer.render_kind(:figures)).to eq("")
     end
   end
@@ -93,6 +101,32 @@ RSpec.describe Metanorma::Plugin::Glossarist::NonVerbalRenderer do
       )
       renderer = described_class.new(collections: all_collections)
       expect(renderer.render_concept_refs(bare.first)).to eq("")
+    end
+
+    it "resolves a ref to a Figure subfigure via the lazy index" do
+      parent = Glossarist::Figure.new(
+        id: "parent-fig",
+        caption: { "eng" => "Parent" },
+        images: [Glossarist::FigureImage.new(src: "parent.svg", role: "vector")],
+        subfigures: [
+          Glossarist::Figure.new(
+            id: "child-subfig",
+            caption: { "eng" => "Child" },
+            images: [Glossarist::FigureImage.new(src: "child.svg", role: "vector")],
+          ),
+        ],
+      )
+      concept = Glossarist::ManagedConcept.new(
+        data: Glossarist::ManagedConceptData.new(
+          id: "test",
+          figures: [Glossarist::FigureReference.new(entity_id: "child-subfig")],
+        ),
+      )
+      renderer = described_class.new(collections: { figures: [parent] })
+
+      out = renderer.render_concept_refs(concept)
+      expect(out).to include("[[child-subfig]]")
+      expect(out).to include("image::child.svg")
     end
   end
 end
