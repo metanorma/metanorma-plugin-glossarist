@@ -14,9 +14,10 @@ on:
   repository_dispatch:
     types: [ do-release ]
 
+# Least-privilege ceiling for the called rubygems-release.yml: its release job
+# needs contents:write (git tag push) and id-token:write (OIDC Trusted Publishing).
 permissions:
   contents: write
-  packages: write
   id-token: write
 
 jobs:
