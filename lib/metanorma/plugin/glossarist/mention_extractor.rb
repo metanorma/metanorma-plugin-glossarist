@@ -6,10 +6,11 @@ module Metanorma
       # Extracts bibliography-citable mention IDs from concept text using
       # +Glossarist::ReferenceExtractor+ as the single canonical parser.
       #
-      # Bibliography relevance = +BibliographicReference+ (from +<<anchor>>+
-      # xrefs) and +ConceptReference+ instances whose +#cite?+ is true (from
-      # +{{cite:id}}+ mentions). Other mention kinds (fig/table/formula/urn)
-      # reference assets or concepts, not bibliography entries.
+      # Bibliography relevance = +BibliographicReference+ (from +{{bib:id}}+
+      # mentions) and +ConceptReference+ instances whose +#cite?+ is true
+      # (from +{{cite:id}}+ mentions). Other mention kinds
+      # (fig/table/formula/urn) reference assets or concepts, not
+      # bibliography entries.
       class MentionExtractor
         def initialize(text)
           @text = text
