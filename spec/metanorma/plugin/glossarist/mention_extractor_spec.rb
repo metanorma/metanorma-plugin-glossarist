@@ -2,13 +2,13 @@
 
 RSpec.describe Metanorma::Plugin::Glossarist::MentionExtractor do
   describe "#bibliography_ids" do
-    it "extracts AsciiDoc xref anchors" do
-      extractor = described_class.new("see <<ISO_11179_1>>")
+    it "extracts {{cite:id}} mention IDs" do
+      extractor = described_class.new("see {{cite:ISO_11179_1}}")
       expect(extractor.bibliography_ids).to eq(["ISO_11179_1"])
     end
 
-    it "extracts xref target ignoring display text" do
-      text = "see <<ISO_11179_1,ISO 11179-1>>"
+    it "extracts {{cite:id}} with display text" do
+      text = "see {{cite:ISO_11179_1}}"
       extractor = described_class.new(text)
       expect(extractor.bibliography_ids).to eq(["ISO_11179_1"])
     end
@@ -18,8 +18,8 @@ RSpec.describe Metanorma::Plugin::Glossarist::MentionExtractor do
       expect(extractor.bibliography_ids).to eq(["ievtermbank"])
     end
 
-    it "combines xref and cite mentions, deduplicated" do
-      text = "<<ievtermbank>> and {{cite:iso_123}} then <<ievtermbank>>"
+    it "combines bib and cite mentions, deduplicated" do
+      text = "{{bib:ievtermbank}} and {{cite:iso_123}} then {{bib:ievtermbank}}"
       extractor = described_class.new(text)
       expect(extractor.bibliography_ids).to contain_exactly("ievtermbank",
                                                             "iso_123")

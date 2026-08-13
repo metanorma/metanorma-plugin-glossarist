@@ -78,7 +78,8 @@ module Metanorma
         end
 
         def find_parent_id(concept)
-          concept.data.related&.find { |r| r.type == "broader" }&.ref&.id&.to_s
+          related = concept.data.related || concept.related
+          related&.find { |r| r.type == "broader" }&.ref&.id&.to_s
         end
 
         def build_anchor(id, prefix)
