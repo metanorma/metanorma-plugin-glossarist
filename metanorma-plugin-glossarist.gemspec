@@ -27,7 +27,7 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "asciidoctor"
   spec.add_dependency "glossarist", "~> 2.8", ">= 2.11.1"
-  spec.add_dependency "liquid"
+  spec.add_dependency "liquid", "~> 5"
   spec.add_dependency "metanorma-utils"
   spec.metadata["rubygems_mfa_required"] = "true"
 end

@@ -12,11 +12,14 @@ gem "rubocop-rspec"
 
 gemspec
 
-# metanorma / metanorma-standoc / metanorma-plugin-lutaml are needed by
-# spec_helper.rb at test time, but live in the default group (not :test)
-# so the release workflow's `bundle install --without development test`
-# still installs them. Bundler otherwise fails `bundle exec rake release`
-# with GemNotFound when the resolver walks the Gemfile.
-gem "metanorma"
-gem "metanorma-plugin-lutaml"
-gem "metanorma-standoc"
+# spec_helper renders through the metanorma :standoc backend
+# (Asciidoctor.convert with backend: :standoc), which only
+# metanorma-standoc registers — a test-time need. The released gem
+# requires none of it: lib/ needs asciidoctor, glossarist, liquid and
+# metanorma-utils. The release workflow bundles with `without 'test'`,
+# which excludes exactly this group, and `bundle exec rake release`
+# keeps working because the Rakefile loads only bundler/gem_tasks
+# and rspec.
+group :test do
+  gem "metanorma-standoc"
+end
