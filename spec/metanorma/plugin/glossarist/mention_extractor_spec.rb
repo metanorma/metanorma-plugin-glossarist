@@ -13,7 +13,7 @@ RSpec.describe Metanorma::Plugin::Glossarist::MentionExtractor do
       expect(extractor.bibliography_ids).to eq(["ISO_11179_1"])
     end
 
-    it "extracts {{cite:id}} mention IDs" do
+    it "extracts IEV termbank cite IDs" do
       extractor = described_class.new("see {{cite:ievtermbank}}")
       expect(extractor.bibliography_ids).to eq(["ievtermbank"])
     end
