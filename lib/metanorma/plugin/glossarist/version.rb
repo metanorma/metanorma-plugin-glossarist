@@ -3,7 +3,7 @@
 module Metanorma
   module Plugin
     module Glossarist
-      VERSION = "0.5.2"
+      VERSION = "0.5.3.pre.alpha.1"
     end
   end
 end
