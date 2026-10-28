@@ -218,11 +218,10 @@ module Metanorma
         end
 
         def render_sections(dataset, register, sections, context_name, options)
-          section_filter = SectionFilter.new(
-            exclude: (options["section_exclude"] || "").split("|"),
-            include: (options["section_include"] || "").split("|"),
+          filtered = section_filter(options).apply(
+            sections,
+            populated: populated_section_ids(dataset, register),
           )
-          filtered = section_filter.apply(sections)
           renderer = SectionRenderer.new(
             dataset: dataset,
             register: register,
@@ -234,6 +233,24 @@ module Metanorma
           )
           renderer.render(filtered) do |concepts|
             @rendered_concepts.concat(concepts)
+          end
+        end
+
+        def section_filter(options)
+          SectionFilter.new(
+            exclude: (options["section_exclude"] || "").split("|"),
+            include: (options["section_include"] || "").split("|"),
+          )
+        end
+
+        # IDs of the register sections that own concepts directly. A
+        # hierarchical register groups schemas under structural category
+        # sections; the section filter descends through structural nodes
+        # and stops at the sections named here.
+        def populated_section_ids(dataset, register)
+          membership = SectionMembership.new(register)
+          dataset.each_with_object({}) do |concept, ids|
+            membership.direct_section_ids(concept).each { |id| ids[id] = true }
           end
         end
 
