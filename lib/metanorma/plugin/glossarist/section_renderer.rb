@@ -46,10 +46,29 @@ module Metanorma
         private
 
         def concepts_for(section)
-          filter_options = { "section" => section.id, "sort_by" => @sort_by }
-          concepts = ConceptFilter.new(filter_options)
-            .apply(@dataset, register: @register)
-          concepts.select(&:default_designation)
+          concepts_by_section[section.id] || []
+        end
+
+        # Resolves every concept's sections once and buckets them, instead
+        # of re-running the full-dataset cascade filter per section: on a
+        # large vocabulary (thousands of concepts, hundreds of sections)
+        # the per-section filter is quadratic in register walks and
+        # transient allocations, and balloons memory.
+        def concepts_by_section
+          @concepts_by_section ||= begin
+            sorter = ConceptFilter.new({ "sort_by" => @sort_by })
+            index = Hash.new { |h, k| h[k] = [] }
+            @dataset.each do |concept|
+              next unless concept.default_designation
+
+              (@register&.concept_section_ids(concept) || []).each do |sid|
+                index[sid] << concept
+              end
+            end
+            index.each_value { |concepts| sorter.apply(concepts) }
+            index.default = []
+            index
+          end
         end
 
         def block_for(section, concepts)
