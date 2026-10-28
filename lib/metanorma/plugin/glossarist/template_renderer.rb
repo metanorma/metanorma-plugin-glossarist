@@ -29,7 +29,7 @@ module Metanorma
             "depth_marker" => "=" * (depth + 1),
             "anchor" => build_anchor(concept.data.id.to_s, anchor_prefix),
           }
-          rendered = render_template(File.read(DEFAULT_TEMPLATE), context)
+          rendered = render_template(default_template_source, context)
           if non_verbal
             rendered += "\n\n#{non_verbal.render_concept_refs(concept)}"
           end
@@ -37,6 +37,13 @@ module Metanorma
         end
 
         private
+
+        # The default template is read once per process: render_concept
+        # runs per concept, and re-reading the file per concept dominated
+        # I/O on large vocabularies.
+        def default_template_source
+          @default_template_source ||= File.read(DEFAULT_TEMPLATE)
+        end
 
         def render_tree_node((concept, children), depth, anchor_prefix,
                              non_verbal)
