@@ -9,13 +9,13 @@ module Metanorma
       # and "3").
       #
       # Resolution order:
-      #   1. DatasetRegister#concept_section_ids(concept) when register is
-      #      available — the canonical V3 path with full cascading.
+      #   1. SectionMembership when a register is available — the canonical
+      #      V3 path with section-ID normalisation and full cascading.
       #   2. Direct ConceptReference domain match (ref_type: "section") —
       #      legacy/fallback when no register is provided. Still applies
       #      cascading by walking the register's section tree if available.
       class SectionCascade
-        SECTION_REF_TYPE = "section"
+        SECTION_REF_TYPE = SectionMembership::SECTION_REF_TYPE
 
         def initialize(register = nil)
           @register = register
@@ -36,18 +36,21 @@ module Metanorma
         private
 
         def cascade_member?(concept, target_id)
-          concept_ids = @register.concept_section_ids(concept)
-          return false if concept_ids.nil? || concept_ids.empty?
-
-          concept_ids.any?(target_id)
+          SectionMembership.new(@register)
+            .section_ids(concept)
+            .any?(target_id)
         end
 
         def local_member?(concept, target_id)
           Array(concept.data.domains).any? do |domain|
             domain.ref_type == SECTION_REF_TYPE &&
-              (domain.concept_id == target_id ||
+              (section_id(domain.concept_id) == target_id ||
                descendant_of?(domain.concept_id, target_id))
           end
+        end
+
+        def section_id(concept_id)
+          concept_id&.delete_prefix(SectionMembership::SECTION_ID_PREFIX)
         end
 
         def descendant_of?(child_id, ancestor_id)

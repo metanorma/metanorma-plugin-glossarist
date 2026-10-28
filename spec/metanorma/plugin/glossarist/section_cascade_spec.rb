@@ -16,6 +16,16 @@ RSpec.describe Metanorma::Plugin::Glossarist::SectionCascade do
   let(:parent_concept) { collection.find { |c| c.data&.id == "1.1" } }
   let(:child_concept) { collection.find { |c| c.data&.id == "1.1.1" } }
 
+  def prefixed_concept
+    Glossarist::ManagedConcept.new(
+      uuid: "prefixed",
+      data: Glossarist::ManagedConceptData.new(
+        id: "prefixed",
+        domains: [Glossarist::ConceptReference.section("section-3.1")],
+      ),
+    )
+  end
+
   describe "with a DatasetRegister (V3 canonical)" do
     it "matches the concept's direct section" do
       cascade = described_class.new(register)
@@ -39,6 +49,16 @@ RSpec.describe Metanorma::Plugin::Glossarist::SectionCascade do
       # parent concept 1.1 is in section 3 directly, not 3.1
       expect(cascade.member?(parent_concept, "3.1")).to be(false)
     end
+
+    it "normalises a section- prefixed domain id" do
+      cascade = described_class.new(register)
+      expect(cascade.member?(prefixed_concept, "3.1")).to be(true)
+    end
+
+    it "cascades from a section- prefixed domain to its ancestors" do
+      cascade = described_class.new(register)
+      expect(cascade.member?(prefixed_concept, "3")).to be(true)
+    end
   end
 
   describe "without a register (legacy fallback)" do
@@ -55,6 +75,11 @@ RSpec.describe Metanorma::Plugin::Glossarist::SectionCascade do
     it "cannot cascade to ancestor without a register" do
       cascade = described_class.new(nil)
       expect(cascade.member?(child_concept, "3")).to be(false)
+    end
+
+    it "normalises a section- prefixed domain id" do
+      cascade = described_class.new(nil)
+      expect(cascade.member?(prefixed_concept, "3.1")).to be(true)
     end
   end
 

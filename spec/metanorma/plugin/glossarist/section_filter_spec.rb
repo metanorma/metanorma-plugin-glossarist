@@ -68,4 +68,76 @@ RSpec.describe Metanorma::Plugin::Glossarist::SectionFilter do
       expect(ids).to contain_exactly("3.1", "4")
     end
   end
+
+  describe "#apply with a hierarchical register" do
+    let(:tree) do
+      [
+        Glossarist::Section.new(
+          id: "modules",
+          names: { "eng" => "Application Modules" },
+          children: [
+            Glossarist::Section.new(
+              id: "Activity_arm",
+              names: { "eng" => "Module: Activity (ARM)" },
+            ),
+            Glossarist::Section.new(
+              id: "Activity_mim",
+              names: { "eng" => "Module: Activity (MIM)" },
+            ),
+          ],
+        ),
+        Glossarist::Section.new(
+          id: "resources",
+          names: { "eng" => "Resources" },
+          children: [
+            Glossarist::Section.new(
+              id: "action_schema",
+              names: { "eng" => "Resource: Action" },
+            ),
+          ],
+        ),
+      ]
+    end
+
+    let(:populated) { %w[Activity_arm Activity_mim action_schema] }
+
+    it "includes matching leaf sections" do
+      filter = described_class.new(include: ["_arm", "_mim"])
+      expect(filter.apply(tree, populated: populated).map(&:id))
+        .to eq(%w[Activity_arm Activity_mim])
+    end
+
+    it "excludes matching leaf sections only" do
+      filter = described_class.new(exclude: ["_arm", "_mim"])
+      expect(filter.apply(tree, populated: populated).map(&:id))
+        .to eq(%w[action_schema])
+    end
+
+    it "never returns a structural section" do
+      ids = described_class.new.apply(tree, populated: populated).map(&:id)
+      expect(ids).not_to include("modules", "resources")
+    end
+
+    it "keeps a section that owns concepts instead of descending into it" do
+      mixed = [
+        Glossarist::Section.new(
+          id: "3",
+          names: { "eng" => "Terms related to testing" },
+          children: [
+            Glossarist::Section.new(
+              id: "3.1",
+              names: { "eng" => "Nested testing subsection" },
+            ),
+          ],
+        ),
+      ]
+      ids = described_class.new.apply(mixed, populated: ["3"]).map(&:id)
+      expect(ids).to eq(["3"])
+    end
+
+    it "filters the sections as given when no populated set is supplied" do
+      filter = described_class.new(include: ["resources"])
+      expect(filter.apply(tree).map(&:id)).to eq(%w[resources])
+    end
+  end
 end

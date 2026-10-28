@@ -56,19 +56,25 @@ module Metanorma
         # transient allocations, and balloons memory.
         def concepts_by_section
           @concepts_by_section ||= begin
+            index = build_section_index
             sorter = ConceptFilter.new({ "sort_by" => @sort_by })
-            index = Hash.new { |h, k| h[k] = [] }
-            @dataset.each do |concept|
-              next unless concept.default_designation
-
-              (@register&.concept_section_ids(concept) || []).each do |sid|
-                index[sid] << concept
-              end
-            end
             index.each_value { |concepts| sorter.apply(concepts) }
             index.default = []
             index
           end
+        end
+
+        def build_section_index
+          index = Hash.new { |h, k| h[k] = [] }
+          membership = SectionMembership.new(@register)
+          @dataset.each do |concept|
+            next unless concept.default_designation
+
+            membership.section_ids(concept).each do |sid|
+              index[sid] << concept
+            end
+          end
+          index
         end
 
         def block_for(section, concepts)

@@ -24,12 +24,15 @@ module Metanorma
           template.registers[:dataset_registry] = registry if registry
           template.errors.clear
           rendered = template.render(assigns)
-          if template.errors.any?
-            error = template.errors.first
-            raise error.cause || error
-          end
-
+          raise_first_error(template)
           rendered
+        end
+
+        def self.raise_first_error(template)
+          return unless template.errors.any?
+
+          error = template.errors.first
+          raise error.cause || error
         end
       end
     end
