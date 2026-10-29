@@ -70,6 +70,19 @@ module Metanorma
           register_for(context_name)&.sections
         end
 
+        # The DatasetRegister of every registered context, loading each
+        # lazily. Document citation resolution matches against all of
+        # them, whatever the citation's source dataset.
+        def registers
+          @context_paths.filter_map { |name, _path| register_for(name) }
+        end
+
+        # Resolves citation parent documents against the registered
+        # datasets' own URNs; memoized per document URN.
+        def document_citations
+          @document_citations ||= DocumentCitations.new(self)
+        end
+
         # Returns the BibliographyData for a registered context, or nil.
         # Exposed as the typed model so callers iterate entries via
         # BibliographyEntry accessors (#id, #reference, #title, #link).

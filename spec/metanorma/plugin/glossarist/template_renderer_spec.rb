@@ -119,4 +119,78 @@ RSpec.describe Metanorma::Plugin::Glossarist::TemplateRenderer do
       expect(ex1_idx).to be > note_idx
     end
   end
+
+  describe "concept sources" do
+    let(:urn_yaml) do
+      <<~YAML
+        data:
+          language_code: eng
+          terms:
+          - designation: activity
+            normative_status: preferred
+            type: expression
+          definition:
+          - content: represents the activity entity
+          sources:
+          - origin:
+              ref:
+                source: urn:iso:std:iso:10303:-2:ed-1:en:tech:Activity_arm:tech:Activity_arm
+                id: Activity_arm
+                version: '3'
+            type: authoritative
+        id: urnsrc-eng
+      YAML
+    end
+
+    def urn_concept
+      lc = Glossarist::LocalizedConcept.from_yaml(urn_yaml)
+      mc_data = Glossarist::ManagedConceptData.from_yaml(
+        "id: urnsrc\nlocalized_concepts:\n  eng: urnsrc-eng\n",
+      )
+      mc = Glossarist::ManagedConcept.new(data: mc_data)
+      mc.add_localization(lc)
+      mc
+    end
+
+    def citation_registry
+      registry = Metanorma::Plugin::Glossarist::DatasetRegistry.new
+      path = File.expand_path("../../../fixtures/document-citation-register",
+                              __dir__)
+      registry.register(nil, "concepts:#{path}")
+      registry
+    end
+
+    it "renders a URN source as a document-citation xref with locality" do
+      renderer = described_class.new(
+        file_system: nil,
+        lang: "eng",
+        document_citations: citation_registry.document_citations,
+      )
+      result = renderer.render_concept(urn_concept, depth: 2)
+      expect(result).to include("[.source]")
+      expect(result)
+        .to include("<<urn_iso_std_iso_10303_-2_ed-1_en," \
+                    "locality:tech=Activity_arm>>")
+    end
+
+    it "keeps the legacy xref for URN sources without a resolver" do
+      result = renderer.render_concept(urn_concept, depth: 2)
+      expect(result).to include("[.source]")
+      expect(result).to include(
+        "<<urn_iso_std_iso_10303_-2_ed-1_en_tech_Activity_arm_" \
+        "tech_Activity_arm_Activity_arm>>",
+      )
+    end
+
+    it "keeps the legacy xref for non-URN sources with a resolver" do
+      renderer = described_class.new(
+        file_system: nil,
+        lang: "eng",
+        document_citations: citation_registry.document_citations,
+      )
+      concept = collection.find { |c| c.default_designation == "entity" }
+      result = renderer.render_concept(concept, depth: 2)
+      expect(result).to include("<<ISO_TS_14812_2022")
+    end
+  end
 end

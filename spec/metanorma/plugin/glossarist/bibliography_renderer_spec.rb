@@ -172,4 +172,72 @@ RSpec.describe Metanorma::Plugin::Glossarist::BibliographyRenderer do
       expect(entry).to include("Available at: https://www.iso.org/standard.html")
     end
   end
+
+  describe "with document citations" do
+    let(:urn_yaml) do
+      <<~YAML
+        data:
+          language_code: eng
+          terms:
+          - designation: activity
+            normative_status: preferred
+            type: expression
+          definition:
+          - content: represents the activity entity
+          sources:
+          - origin:
+              ref:
+                source: urn:iso:std:iso:10303:-2:ed-1:en:tech:Activity_arm:tech:Activity_arm
+                id: Activity_arm
+                version: '3'
+            type: authoritative
+        id: urnsrc-eng
+      YAML
+    end
+
+    def urn_concept(id: "urnsrc", l10n_id: "urnsrc-eng")
+      lc = Glossarist::LocalizedConcept.from_yaml(urn_yaml)
+      mc_data = Glossarist::ManagedConceptData.from_yaml(
+        "id: #{id}\nlocalized_concepts:\n  eng: #{l10n_id}\n",
+      )
+      mc = Glossarist::ManagedConcept.new(data: mc_data)
+      mc.add_localization(lc)
+      mc
+    end
+
+    def documents
+      registry = Metanorma::Plugin::Glossarist::DatasetRegistry.new
+      path = File.expand_path("../../../fixtures/document-citation-register",
+                              __dir__)
+      registry.register(nil, "concepts:#{path}")
+      registry.document_citations
+    end
+
+    it "renders one entry per parent document, not per concept" do
+      renderer = described_class.new(documents: documents)
+      entry = renderer.render_all([urn_concept(id: "a", l10n_id: "a-eng"),
+                                   urn_concept(id: "b", l10n_id: "b-eng")])
+      expect(entry).to eq("* [[[urn_iso_std_iso_10303_-2_ed-1_en,ISO 10303-2]]]")
+    end
+
+    it "emits no mangled per-concept URN anchors" do
+      renderer = described_class.new(documents: documents)
+      entry = renderer.render_all([urn_concept])
+      expect(entry).not_to include("tech_Activity_arm")
+    end
+
+    it "honours existing anchors for the document bibitem" do
+      renderer = described_class.new(
+        existing_anchors: ["urn_iso_std_iso_10303_-2_ed-1_en"],
+        documents: documents,
+      )
+      expect(renderer.render_all([urn_concept])).to be_empty
+    end
+
+    it "keeps legacy entries for non-URN sources" do
+      renderer = described_class.new(documents: documents)
+      entry = renderer.render_entry(entity_concept)
+      expect(entry).to eq("* [[[ISO_TS_14812_2022,ISO/TS 14812:2022]]]")
+    end
+  end
 end
