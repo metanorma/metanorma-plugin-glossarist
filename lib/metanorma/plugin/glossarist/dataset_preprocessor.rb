@@ -26,7 +26,10 @@ module Metanorma
           input_lines = reader.lines.to_enum
           @config[:file_system] = relative_file_path(document, "")
           @registry = DatasetRegistry.new
-          @renderer = TemplateRenderer.new(file_system: @config[:file_system])
+          @renderer = TemplateRenderer.new(
+            file_system: @config[:file_system],
+            document_citations: @registry.document_citations,
+          )
           @rendered_concepts = []
           @title_depth = 2
           @existing_bib_anchors = []
@@ -281,6 +284,7 @@ module Metanorma
           renderer = BibliographyRenderer.new(
             existing_anchors: @existing_bib_anchors,
             bibliography: @registry.bibliography_for(dataset_name),
+            documents: @registry.document_citations,
           )
           liquid_doc.add_raw(renderer.render_all(concepts))
         end
@@ -294,6 +298,7 @@ module Metanorma
           renderer = BibliographyRenderer.new(
             existing_anchors: @existing_bib_anchors,
             bibliography: @registry.bibliography_for(dataset_name),
+            documents: @registry.document_citations,
           )
           entry = renderer.render_entry(concept)
           liquid_doc.add_raw(entry) if entry

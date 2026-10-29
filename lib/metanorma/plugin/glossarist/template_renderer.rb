@@ -6,9 +6,11 @@ module Metanorma
       class TemplateRenderer
         DEFAULT_TEMPLATE = File.join(TEMPLATES_DIR, "_concept.liquid")
 
-        def initialize(file_system:, lang: "eng")
+        def initialize(file_system:, lang: "eng",
+                       document_citations: nil)
           @file_system = file_system
           @lang = lang
+          @document_citations = document_citations
         end
 
         def render_concepts(concepts, depth:, anchor_prefix: nil,
@@ -26,6 +28,7 @@ module Metanorma
           context = {
             "concept" => concept.to_liquid,
             "l10n" => l10n&.to_liquid,
+            "concept_sources" => concept_sources(l10n),
             "depth_marker" => "=" * (depth + 1),
             "anchor" => build_anchor(concept.data.id.to_s, anchor_prefix),
           }
@@ -37,6 +40,49 @@ module Metanorma
         end
 
         private
+
+        # Markup per concept source. Citations with a URN document
+        # identity become a document-citation xref — one bibitem per
+        # parent document, the item path as a custom locality; every
+        # other citation keeps the legacy derived-anchor xref.
+        def concept_sources(l10n)
+          sources = l10n&.sources || []
+          sources.map do |source|
+            {
+              "markup" => source_markup(source),
+              "modification" => source.modification,
+            }
+          end
+        end
+
+        def source_markup(source)
+          citation = source.origin
+          document_markup(citation) || legacy_source_markup(citation)
+        end
+
+        def document_markup(citation)
+          doc = @document_citations&.resolve(citation)
+          return nil unless doc
+
+          locality = doc[:locality] ? ",#{doc[:locality]}" : ""
+          "<<#{doc[:anchor]}#{locality}>>"
+        end
+
+        def legacy_source_markup(citation)
+          return "" if citation.nil?
+
+          ref_text = citation.text.to_s.gsub(%r{[ /:]}, "_")
+          return "" if ref_text.empty?
+
+          if citation.locality
+            ref_text +=
+              ",#{citation.locality.type}=" \
+              "\"#{citation.locality.reference_from}\""
+          elsif citation.original
+            ref_text += ",#{citation.original}"
+          end
+          "<<#{ref_text}>>"
+        end
 
         # The default template is read once per process: render_concept
         # runs per concept, and re-reading the file per concept dominated

@@ -15,10 +15,12 @@ module Metanorma
         IEV_ENTRY = "* [[[ievtermbank,IEV]]], _IEV: Electropedia_"
         IEV_ANCHOR = "ievtermbank"
 
-        def initialize(existing_anchors: [], bibliography: nil)
+        def initialize(existing_anchors: [], bibliography: nil,
+                       documents: nil)
           @rendered = {}
           @existing_anchors = Set.new(existing_anchors)
           @bibliography = bibliography
+          @documents = documents
         end
 
         def render_entry(concept, lang: "eng")
@@ -56,20 +58,47 @@ module Metanorma
           return [] if sources.nil? || sources.empty?
 
           sources.filter_map do |source|
-            ref = source.origin&.text
-            next if ref.nil? || ref.empty?
-            next if @rendered.key?(ref)
-
-            anchor = ref.gsub(%r{[ /:]}, "_")
-            next if @existing_anchors.include?(anchor)
-
-            @rendered[ref] = anchor
-
-            if anchor == IEV_ANCHOR
-              IEV_ENTRY
+            if document_source?(source)
+              document_entry(source)
             else
-              format_entry(anchor, ref)
+              legacy_entry(source)
             end
+          end
+        end
+
+        def document_source?(source)
+          !@documents.nil? && !@documents.resolve(source.origin).nil?
+        end
+
+        # URN citations of a parent document render one bibliography
+        # entry per distinct document (the termsource's bibitemid), not
+        # one per concept — the per-concept raw URNs never resolve.
+        def document_entry(source)
+          doc = @documents&.resolve(source.origin)
+          return nil unless doc
+
+          anchor = doc[:anchor]
+          return nil if @rendered.key?(anchor)
+          return nil if @existing_anchors.include?(anchor)
+
+          @rendered[anchor] = anchor
+          format_entry(anchor, doc[:citeas])
+        end
+
+        def legacy_entry(source)
+          ref = source.origin&.text
+          return nil if ref.nil? || ref.empty?
+          return nil if @rendered.key?(ref)
+
+          anchor = ref.gsub(%r{[ /:]}, "_")
+          return nil if @existing_anchors.include?(anchor)
+
+          @rendered[ref] = anchor
+
+          if anchor == IEV_ANCHOR
+            IEV_ENTRY
+          else
+            format_entry(anchor, ref)
           end
         end
 

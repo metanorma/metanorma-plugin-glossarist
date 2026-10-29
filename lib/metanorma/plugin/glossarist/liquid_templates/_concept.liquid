@@ -47,11 +47,10 @@ domain:[{{ l10n.data.domain }}]
 
 {% endfor %}
 {% endif %}
-{% for source in l10n.data.sources.sources -%}
-{% assign ref_text = source.origin.text | format_ref -%}
-{% if ref_text != "" -%}
+{% for source in concept_sources -%}
+{% if source.markup != "" -%}
 [.source]
-<<{{ ref_text }}{% if source.origin.locality %},{{ source.origin.locality.type }}="{{ source.origin.locality.reference_from }}"{% elsif source.origin.original %},{{ source.origin.original }}{% endif %}>>{% if source.modification %}, {{ source.modification }}{% endif %}
+{{ source.markup }}{% if source.modification %}, {{ source.modification }}{% endif %}
 
 {% endif %}
 {% endfor %}
