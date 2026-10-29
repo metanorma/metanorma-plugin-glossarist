@@ -21,5 +21,8 @@ gemspec
 # keeps working because the Rakefile loads only bundler/gem_tasks
 # and rspec.
 group :test do
-  gem "metanorma-standoc"
+  # glossarist 2.14 requires relaton ~> 3.0.0.pre.alpha (relaton-render 3);
+  # released standoc/isodoc still pin relaton-render 1.x — the prerelease
+  # line is the first pairing that resolves with glossarist 2.14.
+  gem "metanorma-standoc", ">= 3.5.1.pre.alpha.4"
 end
