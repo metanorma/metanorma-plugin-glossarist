@@ -7,9 +7,16 @@ module Metanorma
         DELEGATED_TO_DATA = %w[localizations tags].freeze
         DATA_ALIASES = { "identifier" => :id }.freeze
 
-        def resolve(concept, path)
+        # Filter and section passes rebuild ConceptFilter per section, so a
+        # per-instance cache resets exactly where reuse would pay off.
+        # Concepts live for the whole preprocessing run: a process-wide
+        # cache keyed by concept identity serves every pass.
+        def self.resolve_cache
           @resolve_cache ||= {}
-          @resolve_cache[[concept.object_id, path]] ||= begin
+        end
+
+        def resolve(concept, path)
+          self.class.resolve_cache[[concept.object_id, path]] ||= begin
             parts = self.class.parsed_parts(path)
             value = navigate(concept, parts)
             value.is_a?(String) ? value : value.to_s
