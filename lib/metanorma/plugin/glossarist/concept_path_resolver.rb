@@ -8,14 +8,23 @@ module Metanorma
         DATA_ALIASES = { "identifier" => :id }.freeze
 
         def resolve(concept, path)
-          parts = parse_path(path)
-          value = navigate(concept, parts)
-          value.is_a?(String) ? value : value.to_s
+          @resolve_cache ||= {}
+          @resolve_cache[[concept.object_id, path]] ||= begin
+            parts = self.class.parsed_parts(path)
+            value = navigate(concept, parts)
+            value.is_a?(String) ? value : value.to_s
+          end
         end
 
-        private
+        # Paths come from static template and filter expressions and repeat
+        # for every concept: parsing each distinct path once beats
+        # re-splitting per resolve call on large vocabularies.
+        def self.parsed_parts(path)
+          @parsed_parts ||= {}
+          @parsed_parts[path] ||= parse_parts(path)
+        end
 
-        def parse_path(path)
+        def self.parse_parts(path)
           path.split(".").flat_map do |segment|
             if segment.include?("[")
               parse_indexed_segment(segment)
@@ -25,7 +34,7 @@ module Metanorma
           end
         end
 
-        def parse_indexed_segment(segment)
+        def self.parse_indexed_segment(segment)
           field, index_part = segment.split("[", 2)
           index = index_part&.delete("]'\"")
           if index.match?(/\A\d+\z/)
@@ -34,6 +43,8 @@ module Metanorma
             [field, index]
           end
         end
+
+        private
 
         def navigate(obj, parts)
           parts.reduce(obj) do |current, key|
