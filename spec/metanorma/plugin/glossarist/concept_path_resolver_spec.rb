@@ -11,6 +11,16 @@ RSpec.describe Metanorma::Plugin::Glossarist::ConceptPathResolver do
   let(:resolver) { described_class.new }
 
   describe "#resolve" do
+    it "shares resolved values across resolver instances" do
+      first = described_class.new.resolve(concept, "data.id")
+      second = described_class.new.resolve(concept, "data.id")
+
+      expect(first).to eq("3.1.1.1")
+      expect(second).to eq(first)
+      expect(described_class.resolve_cache)
+        .to include([concept.object_id, "data.id"])
+    end
+
     it "resolves default_designation" do
       expect(resolver.resolve(concept, "default_designation")).to eq("entity")
     end
