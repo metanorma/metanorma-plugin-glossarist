@@ -143,10 +143,87 @@ module Metanorma
         end
 
         def store_for(path)
-          @stores[path] ||= begin
-            store = ::Glossarist::GlossaryStore.new
-            store.load_directory(path)
-            store
+          @stores[path] ||= load_store_cached(path)
+        end
+
+        # Content-addressed cache for the parsed concept models. Loading a
+        # large dataset costs tens of seconds of per-file YAML parsing; the
+        # parsed concept array Marshal-round-trips cleanly and deeply
+        # equal, so a hit replaces the load outright. Opt-in: only active
+        # when the consumer points GLOSSARIST_CACHE_DIR at a directory
+        # they own — the library writes nothing unless asked.
+        #
+        # Datasets carrying non-verbal entity directories (figures,
+        # tables, formulas) bypass the cache: their store state is richer
+        # than the concept array this cache covers.
+        def load_store_cached(path)
+          cache_dir = ENV.fetch("GLOSSARIST_CACHE_DIR", nil)
+          return load_store(path) if cache_dir.nil? || cache_dir.empty?
+
+          file = concepts_cache_file(path, cache_dir)
+          non_verbal = non_verbal_dataset?(path)
+          cached = read_concepts_cache(file) unless non_verbal
+          return CachedConceptsStore.new(cached) if cached
+
+          store = load_store(path)
+          write_concepts_cache(file, store.concepts) unless non_verbal
+          store
+        end
+
+        def non_verbal_dataset?(path)
+          NON_VERBAL_KINDS.any? do |kind|
+            File.directory?(File.join(path, kind.to_s))
+          end
+        end
+
+        def load_store(path)
+          store = ::Glossarist::GlossaryStore.new
+          store.load_directory(path)
+          store
+        end
+
+        def read_concepts_cache(file)
+          return nil unless File.exist?(file)
+
+          begin
+            # The cache file is written by this method, keyed by the
+            # dataset's own content signature.
+            Marshal.send(:load, File.binread(file))
+          rescue TypeError, ArgumentError, EOFError
+            File.delete(file) # stale or corrupt: fall through to a load
+            nil
+          end
+        end
+
+        def write_concepts_cache(file, concepts)
+          tmp = "#{file}.#{Process.pid}.tmp"
+          File.binwrite(tmp, Marshal.dump(concepts))
+          File.rename(tmp, file)
+        rescue TypeError
+          File.delete(tmp) # concept graph not marshalable: cache disabled
+        end
+
+        def concepts_cache_file(path, cache_dir)
+          require "digest"
+          require "fileutils"
+          signature = Dir.glob(File.join(path, "**", "*.{yaml,yml}"))
+            .map { |f| [f.delete_prefix(path), File.size(f), File.mtime(f).to_i] }
+            .hash
+          key = Digest::SHA256.hexdigest("#{path}\0#{signature}")
+          FileUtils.mkdir_p(cache_dir)
+          File.join(cache_dir, "glossarist-concepts-#{key}.marshal")
+        end
+
+        # Minimal store stand-in answering exactly what DatasetRegistry
+        # consumes from a cached dataset: the concept array. Non-verbal
+        # kinds are covered by the directory guard above.
+        CachedConceptsStore = Struct.new(:concepts_arr) do
+          def concepts
+            concepts_arr
+          end
+
+          %i[figures tables formulas].each do |kind|
+            define_method(kind) { [] }
           end
         end
 
