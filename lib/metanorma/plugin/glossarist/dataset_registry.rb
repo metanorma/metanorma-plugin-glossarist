@@ -14,6 +14,59 @@ module Metanorma
         BIBLIOGRAPHY_FILENAME = "bibliography.yaml"
         REGISTER_FILENAME = "register.yaml"
 
+        # Set this env var to share loaded datasets process-wide: one load
+        # per dataset path per process instead of one per registry. Built
+        # for metanorma's fragment-parallel compilation, which preloads the
+        # document's datasets in the parent process and forks the fragment
+        # workers from it: the workers then read the parent's loaded
+        # models copy-on-write instead of re-parsing the dataset per
+        # fragment. Also serves any single process that compiles several
+        # documents over the same dataset (collection builds).
+        #
+        # The memo holds loaded models alive for the process lifetime and
+        # shares them across every consumer: datasets that get mutated
+        # after rendering, or unbounded sets of distinct large datasets,
+        # must not enable it. Off by default.
+        SHARED_STORE_ENV = "METANORMA_GLOSSARIST_SHARED_DATASETS"
+
+        # One cached dataset: the loaded store, plus its concept array
+        # once first requested (+GlossaryStore#concepts+ rebuilds the
+        # array from the store's models on every call, which for a large
+        # dataset is far from free).
+        SharedDataset = Struct.new(:store, :concepts)
+
+        class << self
+          # Returns the process-wide SharedDataset entry for +path+,
+          # calling the loader under the class mutex on first access, or
+          # nil while the env gate is unset. The gate is read on every
+          # access so tests and hosts can toggle it at any time.
+          def shared_store_for(path)
+            return nil unless shared_stores_enabled?
+
+            shared_stores_mutex.synchronize do
+              @shared_stores ||= {}
+              @shared_stores[path] ||= SharedDataset.new(yield)
+            end
+          end
+
+          # Forgets every shared entry. Spec support only: production use
+          # keeps the memo for the process lifetime.
+          def clear_shared_stores
+            shared_stores_mutex.synchronize { @shared_stores = nil }
+          end
+
+          def shared_stores_mutex
+            @shared_stores_mutex ||= Mutex.new
+          end
+
+          private
+
+          def shared_stores_enabled?
+            v = ENV.fetch(SHARED_STORE_ENV, nil)
+            v && !v.empty? && v != "0"
+          end
+        end
+
         # Non-verbal entity kinds exposed by GlossaryStore. Each kind
         # matches a method on +GlossaryStore+ (+#figures+, +#tables+,
         # +#formulas+) that returns an +Array<Figure|Table|Formula>+,
@@ -96,7 +149,11 @@ module Metanorma
         # Returns concepts cached at an absolute path. Used by Liquid
         # blocks that receive a pre-resolved absolute path.
         def concepts_at(path)
-          store_for(path).concepts
+          if (entry = shared_entry(path))
+            entry.concepts ||= entry.store.concepts
+          else
+            store_for(path).concepts
+          end
         end
 
         # Returns the Array of dataset-level non-verbal entities of the
@@ -143,7 +200,18 @@ module Metanorma
         end
 
         def store_for(path)
-          @stores[path] ||= load_store_cached(path)
+          if (entry = shared_entry(path))
+            entry.store
+          else
+            @stores[path] ||= load_store_cached(path)
+          end
+        end
+
+        # Returns the process-wide SharedDataset entry for +path+, loading
+        # the store under the class mutex on first access, or nil when the
+        # shared cache is disabled.
+        def shared_entry(path)
+          self.class.shared_store_for(path) { load_store_cached(path) }
         end
 
         # Content-addressed cache for the parsed concept models. Loading a
