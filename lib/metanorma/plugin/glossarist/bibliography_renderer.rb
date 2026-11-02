@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "set"
+require_relative "pubid_normalization"
 
 module Metanorma
   module Plugin
@@ -12,6 +13,8 @@ module Metanorma
       # model — entries are matched by `id` and read via BibliographyEntry
       # accessors (#reference, #title, #link).
       class BibliographyRenderer
+        include PubidNormalization
+
         IEV_ENTRY = "* [[[ievtermbank,IEV]]], _IEV: Electropedia_"
         IEV_ANCHOR = "ievtermbank"
 
@@ -118,9 +121,9 @@ module Metanorma
 
         def format_entry(anchor, ref)
           entry = bibliography_entry(ref)
-          return "* [[[#{anchor},#{ref}]]]" unless entry
+          return "* [[[#{anchor},#{normalized_reference(ref)}]]]" unless entry
 
-          display_ref = entry.reference || ref
+          display_ref = normalized_reference(entry.reference || ref)
           parts = ["* [[[#{anchor},#{display_ref}]]]"]
           parts << ", _#{entry.title}_" if entry.title
           parts << ". Available at: #{entry.link} " if entry.link
