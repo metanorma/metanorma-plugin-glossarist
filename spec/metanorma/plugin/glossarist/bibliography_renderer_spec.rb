@@ -48,6 +48,35 @@ RSpec.describe Metanorma::Plugin::Glossarist::BibliographyRenderer do
       OUTPUT
     end
 
+    it "renders a URN reference through pubid's canonical form" do
+      concept = Glossarist::V3::ConceptDocument.from_yamls(<<~YAML).to_managed_concept
+        ---
+        data:
+          identifier: c1
+          localized_concepts:
+            eng: l1
+        ---
+        data:
+          language_code: eng
+          id: l1
+          definitions:
+          - content: test
+          sources:
+          - type: authoritative
+            origin:
+              ref:
+                source: "urn:iso:std:iso:14812"
+        YAML
+      bib = Glossarist::BibliographyData.new(
+        bibliography: [
+          { id: "urn:iso:std:iso:14812", reference: "urn:iso:std:iso:14812" },
+        ],
+      )
+      renderer = described_class.new(bibliography: bib)
+      expect(renderer.render_entry(concept))
+        .to include("[[[urn_iso_std_iso_14812,ISO 14812]]]")
+    end
+
     it "returns nil for concept with no localization" do
       concept = collection.find do |c|
         c.default_designation == "entity"

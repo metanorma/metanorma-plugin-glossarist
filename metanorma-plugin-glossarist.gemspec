@@ -29,5 +29,6 @@ Gem::Specification.new do |spec|
   spec.add_dependency "glossarist", "~> 2.8", ">= 2.14.9.pre.alpha.1"
   spec.add_dependency "liquid", "~> 5"
   spec.add_dependency "metanorma-utils"
+  spec.add_dependency "pubid", "~> 2.0"
   spec.metadata["rubygems_mfa_required"] = "true"
 end
