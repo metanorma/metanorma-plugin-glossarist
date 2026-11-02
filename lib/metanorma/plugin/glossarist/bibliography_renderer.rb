@@ -97,9 +97,27 @@ module Metanorma
 
           if anchor == IEV_ANCHOR
             IEV_ENTRY
+          elsif urn_citation?(ref)
+            urn_entry(anchor, ref)
           else
             format_entry(anchor, ref)
           end
+        end
+
+        # glossarist#96: a dataset URN citation whose document is not a
+        # registered dataset has no document identity. Rendering it as a
+        # docid escalates it into a relaton fetch per occurrence; it is
+        # rendered literally instead, so it stays linked to its
+        # termsource and costs no network.
+        def urn_entry(anchor, ref)
+          "* [[[#{anchor},nofetch(#{ref})]]]"
+        end
+
+        # Citations in the glossarist dataset URN scheme (the scheme
+        # DocumentCitations resolves); anything else is a legacy citation
+        # of a document identifier and is fetched as written.
+        def urn_citation?(ref)
+          ref.match?(/\Aurn:/i)
         end
 
         def xref_entries(l10n)

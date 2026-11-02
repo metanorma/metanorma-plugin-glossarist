@@ -96,6 +96,26 @@ RSpec.describe Metanorma::Plugin::Glossarist::BibliographyRenderer do
       entry = renderer.render_entry(entity_concept)
       expect(entry).to eq("* [[[ISO_TS_14812_2022,ISO/TS 14812:2022]]]")
     end
+
+    it "renders unresolved dataset URN citations as nofetch entries (#96)" do
+      concept = entity_concept
+      l10n = concept.localization("eng")
+      source = l10n.data.sources.sources.first
+      urn = "urn:iso:std:iso:10303:-2:ed-1:en:tech:ACTIVITY_MIM" \
+            "_tech_ACTIVITY_MIM_ACTIVITY_MIM"
+      source.origin.text = urn
+
+      renderer = described_class.new
+      entry = renderer.render_entry(concept)
+      expect(entry).to eq("* [[[#{urn.tr(' :/', '__')},nofetch(#{urn})]]]")
+    end
+
+    it "keeps document-identifier citations fetchable (#96)" do
+      renderer = described_class.new
+      entry = renderer.render_entry(entity_concept)
+      expect(entry).to eq("* [[[ISO_TS_14812_2022,ISO/TS 14812:2022]]]")
+      expect(entry).not_to include("nofetch")
+    end
   end
 
   describe "#render_all" do
