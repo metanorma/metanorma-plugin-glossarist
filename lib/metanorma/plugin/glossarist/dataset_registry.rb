@@ -274,10 +274,22 @@ module Metanorma
         def concepts_cache_file(path, cache_dir)
           require "digest"
           require "fileutils"
-          signature = Dir.glob(File.join(path, "**", "*.{yaml,yml}"))
-            .map { |f| [f.delete_prefix(path), File.size(f), File.mtime(f).to_i] }
-            .hash
-          key = Digest::SHA256.hexdigest("#{path}\0#{signature}")
+          # Content-addressed: digest file contents, not mtimes. A
+          # regenerated dataset (identical bytes, fresh mtimes) must hit
+          # the same cache entry, or in-pipeline dataset generation
+          # defeats the cache and every compile re-parses the whole
+          # dataset (measured: part-2 corpus compile 10m -> 83m).
+          digest = Digest::SHA256.new
+          Dir.glob(File.join(path, "**", "*.{yaml,yml}")).sort.each do |f|
+            rel = f.delete_prefix(path)
+            digest.update(rel)
+            digest.update("\0")
+            digest.update(File.size(f).to_s)
+            digest.update("\0")
+            digest.update(File.binread(f))
+            digest.update("\0")
+          end
+          key = Digest::SHA256.hexdigest("#{path}\0#{digest.hexdigest}")
           FileUtils.mkdir_p(cache_dir)
           File.join(cache_dir, "glossarist-concepts-#{key}.marshal")
         end

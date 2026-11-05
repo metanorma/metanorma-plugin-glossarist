@@ -74,4 +74,46 @@ RSpec.describe Metanorma::Plugin::Glossarist::DatasetRegistry do
       ENV.delete("GLOSSARIST_CACHE_DIR")
     end
   end
+
+  it "hits the same cache entry when identical content is rewritten" do
+    dir = Dir.mktmpdir
+    ENV["GLOSSARIST_CACHE_DIR"] = cache_dir
+    begin
+      FileUtils.cp_r(File.join(v2_dataset, "."), dir)
+      registry.concepts_at(dir)
+      before = Dir.children(cache_dir).grep(/concepts-/)
+
+      # Regenerated in place: identical bytes, fresh mtimes.
+      sleep 1.1 # cross the filesystem's mtime granularity
+      Dir.glob(File.join(dir, "**", "*.{yaml,yml}")).each do |f|
+        FileUtils.touch(f)
+      end
+
+      described_class.new.concepts_at(dir)
+      expect(Dir.children(cache_dir).grep(/concepts-/)).to eq(before)
+    ensure
+      ENV.delete("GLOSSARIST_CACHE_DIR")
+      FileUtils.rm_rf(dir)
+    end
+  end
+
+  it "keys the cache on content: changed bytes yield a distinct entry" do
+    dir = Dir.mktmpdir
+    ENV["GLOSSARIST_CACHE_DIR"] = cache_dir
+    begin
+      FileUtils.cp_r(File.join(v2_dataset, "."), dir)
+      registry.concepts_at(dir)
+      before = Dir.children(cache_dir).grep(/concepts-/)
+
+      target = Dir.glob(File.join(dir, "**", "*.yaml")).first
+      File.write(target, File.read(target) + "\n# changed\n")
+
+      described_class.new.concepts_at(dir)
+      after = Dir.children(cache_dir).grep(/concepts-/)
+      expect(after - before).not_to be_empty
+    ensure
+      ENV.delete("GLOSSARIST_CACHE_DIR")
+      FileUtils.rm_rf(dir)
+    end
+  end
 end
