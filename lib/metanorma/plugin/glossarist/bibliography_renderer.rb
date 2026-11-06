@@ -100,7 +100,7 @@ module Metanorma
 
           if anchor == IEV_ANCHOR
             IEV_ENTRY
-          elsif urn_citation?(ref)
+          elsif urn_citation?(ref) && !pubid_parseable?(ref)
             urn_entry(anchor, ref)
           else
             format_entry(anchor, ref)
@@ -121,6 +121,15 @@ module Metanorma
         # of a document identifier and is fetched as written.
         def urn_citation?(ref)
           ref.match?(/\Aurn:/i)
+        end
+
+        # pubid is the SSOT for document identifiers: a URN pubid can
+        # parse is a real document citation and renders through pubid's
+        # canonical form (1650c50's intent); only the unparseable ones -
+        # dataset-scheme URNs - keep the nofetch literal, so they stay
+        # linked to their termsource and cost no relaton fetch (c888a74).
+        def pubid_parseable?(ref)
+          normalized_reference(ref) != ref
         end
 
         def xref_entries(l10n)
