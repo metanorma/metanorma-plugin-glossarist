@@ -26,7 +26,7 @@ Gem::Specification.new do |spec|
   spec.required_ruby_version = Gem::Requirement.new(">= 3.3.0")
 
   spec.add_dependency "asciidoctor"
-  spec.add_dependency "glossarist", "~> 2.8", ">= 2.14.9.pre.alpha.1"
+  spec.add_dependency "glossarist", "~> 2.14"
   spec.add_dependency "liquid", "~> 5"
   spec.add_dependency "metanorma-utils"
   spec.add_dependency "pubid", "~> 2.0"
