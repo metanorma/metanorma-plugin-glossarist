@@ -21,15 +21,14 @@ gemspec
 # keeps working because the Rakefile loads only bundler/gem_tasks
 # and rspec.
 group :test do
-  # glossarist 2.14 requires relaton ~> 3.0.0.pre.alpha (relaton-render 3);
+  # glossarist 2.14 rides the released relaton 3.1.1 line;
   # released standoc/isodoc still pin relaton-render 1.x — the prerelease
   # line is the first pairing that resolves with glossarist 2.14.
-  gem "metanorma-standoc", ">= 3.5.1.pre.alpha.4"
-  gem "isodoc", ">= 3.7.4.pre.alpha.5"
+  gem "metanorma-standoc", "~> 3.5"
+  gem "isodoc", "~> 3.7"
   # 0.7.54+ boots LutamlDataPreprocessor only with the newer lutaml-lml;
   # the spec suite's asciidoctor boot must not regress on plugin loading.
   gem "metanorma-plugin-lutaml", "0.7.54"
-  # standoc 3.5.1.pre.alpha.4 renders through Metanorma::Utils::GcBudget,
   # added in metanorma-utils 2.0.8.
   gem "metanorma-utils", ">= 2.0.8"
 end
