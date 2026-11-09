@@ -36,7 +36,9 @@ module Metanorma
           if non_verbal
             rendered += "\n\n#{non_verbal.render_concept_refs(concept)}"
           end
-          normalize_whitespace(rendered)
+          normalize_whitespace(Sanitize.resolve_urn_citations(
+            rendered, anchor_prefix,
+          ))
         end
 
         private

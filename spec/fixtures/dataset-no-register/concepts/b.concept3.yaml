@@ -1,0 +1,22 @@
+---
+data:
+  identifier: b.concept3
+  localized_concepts:
+    eng: 11111111-1111-5111-8111-111111111111
+  domains:
+  - concept_id: section-b
+    source: urn:example:tech:a
+    ref_type: section
+id: 41111111-1111-5111-8111-111111111111
+schema_version: v3
+---
+data:
+  definition:
+  - content: a concept with plain content only
+  terms:
+  - type: expression
+    normative_status: preferred
+    designation: concept3
+  language_code: eng
+  annotations: []
+id: 51111111-1111-5111-8111-111111111111
