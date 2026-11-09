@@ -28,6 +28,11 @@ module Metanorma
         # rendered `[[<id>]]` anchors, instead of leaving a raw URN that
         # the term lookup cannot match. Citations without a term/tech
         # segment (e.g. `{{bib:...}}`) are left untouched.
+        # A `{{bib:<id>}}` citation names the document's own bibliography
+        # entry anchored `[[[<id>,...]]]` in the bibliography clause;
+        # emit a plain xref to it. (The legacy ncname form `bib_<id>` is
+        # an anchor that does not exist.)
+        BIB_CITATION_RX = /\{\{bib:([^,{}]+)\}\}/.freeze
         URN_CITATION_RX = /\{\{(urn:[^,{}]+),([^}]+?)\}\}/.freeze
         URN_SEGMENT_RX = /:(?:term|tech):/.freeze
 
@@ -46,6 +51,9 @@ module Metanorma
             next m[0] if id.empty?
 
             resolve.call(id, m[2])
+          end.gsub(BIB_CITATION_RX) do
+            m = Regexp.last_match
+            "<<#{m[1]}>>"
           end
         end
       end

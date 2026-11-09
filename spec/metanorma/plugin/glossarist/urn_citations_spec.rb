@@ -14,10 +14,10 @@ RSpec.describe Metanorma::Plugin::Glossarist::Sanitize do
       )).to eq "<<Schema.Entity,entity>>"
     end
 
-    it "leaves citations without a term/tech segment untouched" do
+    it "rewrites bib citations to xrefs on the bibliography anchors" do
       expect(described_class.resolve_urn_citations(
         "{{bib:ECMA_262}} and {{plain word}}",
-      )).to eq "{{bib:ECMA_262}} and {{plain word}}"
+      )).to eq "<<ECMA_262>> and {{plain word}}"
     end
 
     it "leaves content without citations untouched" do
