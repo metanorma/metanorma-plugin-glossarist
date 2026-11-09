@@ -108,8 +108,7 @@ module Metanorma
           end
           if (match = current_line.match(BIB_ANCHOR_REGEX))
             @existing_bib_anchors << match[1]
-            $stderr.puts "[g108-anchor] collected #{match[1].inspect} from: #{current_line[0, 80].inspect}" if match[1].start_with?("bib_") || %w(ECMA_262 ISO_1101).include?(match[1])
-          end
+            end
           liquid_doc.add_raw(current_line)
         end
 
@@ -309,16 +308,12 @@ module Metanorma
                      end
           return unless concepts && !concepts.empty?
 
-          bib = @registry.bibliography_for(dataset_name)
-          $stderr.puts "[g108-bib] #{dataset_name}: concepts=#{concepts.size} bib=#{bib.class} keys=#{bib.respond_to?(:keys) ? bib.keys.size : 'n/a'}"
           renderer = BibliographyRenderer.new(
             existing_anchors: @existing_bib_anchors,
-            bibliography: bib,
+            bibliography: @registry.bibliography_for(dataset_name),
             documents: @registry.document_citations,
           )
-          rendered_bib = renderer.render_all(concepts)
-          $stderr.puts "[g108-bib] #{dataset_name}: rendered=#{rendered_bib.lines.count} first=#{rendered_bib.lines.first&.inspect}"
-          liquid_doc.add_raw("\n#{rendered_bib}")
+          liquid_doc.add_raw("\n#{renderer.render_all(concepts)}")
         end
 
         def process_bibliography_entry(document, liquid_doc, match)

@@ -36,15 +36,6 @@ module Metanorma
         end
 
         def render_all(concepts, lang: "eng")
-          $stderr.puts "[g108-render_all] concepts=#{concepts.size} first_class=#{concepts.first&.class}"
-          bib_mentions = 0
-          concepts.each do |c|
-            l = c.localization(lang)
-            next unless l
-            txt = Array(l.notes).map { |n| n.respond_to?(:content) ? n.content : n }.join(" ")
-            bib_mentions += 1 if txt.include?("{{bib:")
-          end
-          $stderr.puts "[g108-render_all] notes_with_bib=#{bib_mentions}"
           all_entries = concepts.filter_map do |concept|
             l10n = concept.localization(lang)
             next unless l10n
@@ -144,9 +135,6 @@ module Metanorma
 
         def xref_entries(l10n)
           xref_ids = extract_content_xrefs(l10n)
-          unless xref_ids.empty?
-            $stderr.puts "[g108-xref] ids=#{xref_ids.first(4).inspect} bib=#{!@bibliography.nil?} found=#{xref_ids.filter_map { |i| @bibliography&.find(i) ? 1 : nil }.size} skipped_rendered=#{xref_ids.count { |i| @rendered.value?(i) }} skipped_existing=#{xref_ids.count { |i| @existing_anchors.include?(i) }}"
-          end
           return [] if xref_ids.empty?
 
           xref_ids.filter_map do |ref_id|
