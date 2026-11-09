@@ -209,15 +209,42 @@ module Metanorma
           context_name = matches[0]
           options = parse_options(matches[1..])
 
-          register = @registry.register_for(context_name)
-          sections = register&.sections
-          return unless sections && !sections.empty?
-
           dataset = @registry.resolve_dataset(nil, context_name)
           return unless dataset
 
+          register = @registry.register_for(context_name)
+          sections = register&.sections
+          if sections.nil? || sections.empty?
+            # A dataset without a register.yaml renders from auto-derived
+            # sections (one per declared section domain), instead of
+            # silently emitting nothing.
+            register = auto_register(dataset)
+            sections = register&.sections
+          end
+          return unless sections && !sections.empty?
+
           parts = render_sections(dataset, register, sections, context_name, options)
           liquid_doc.add_raw("\n#{parts.join("\n\n")}")
+        end
+
+        # Sections derived from the concepts' declared section domains
+        # (`concept_id: section-<id>`), for datasets shipped without a
+        # register.yaml.
+        def auto_register(dataset)
+          ids = dataset.filter_map do |concept|
+            Array(concept&.data&.domains)
+              .select { |domain| domain.ref_type == SectionMembership::SECTION_REF_TYPE }
+              .filter_map { |domain| domain.concept_id&.delete_prefix(SectionMembership::SECTION_ID_PREFIX) }
+              .first
+          end.uniq.sort
+
+          return nil if ids.empty?
+
+          ::Glossarist::DatasetRegister.new(
+            sections: ids.map do |id|
+              ::Glossarist::Section.new(id: id, names: { "eng" => id })
+            end,
+          )
         end
 
         def render_sections(dataset, register, sections, context_name, options)

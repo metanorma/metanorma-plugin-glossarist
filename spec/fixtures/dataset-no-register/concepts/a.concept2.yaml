@@ -1,0 +1,22 @@
+---
+data:
+  identifier: a.concept2
+  localized_concepts:
+    eng: 61111111-1111-5111-8111-111111111111
+  domains:
+  - concept_id: section-a
+    source: urn:example:tech:a
+    ref_type: section
+id: 71111111-1111-5111-8111-111111111111
+schema_version: v3
+---
+data:
+  definition:
+  - content: the referenced concept
+  terms:
+  - type: expression
+    normative_status: preferred
+    designation: concept2
+  language_code: eng
+  annotations: []
+id: 81111111-1111-5111-8111-111111111111
