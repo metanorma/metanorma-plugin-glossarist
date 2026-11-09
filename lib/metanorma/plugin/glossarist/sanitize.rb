@@ -29,7 +29,7 @@ module Metanorma
         # the term lookup cannot match. Citations without a term/tech
         # segment (e.g. `{{bib:...}}`) are left untouched.
         URN_CITATION_RX = /\{\{(urn:[^,{}]+),([^}]+?)\}\}/.freeze
-        URN_SEGMENT_RX = %r{\Aurn:[^:]+:(?:term|tech):}.freeze
+        URN_SEGMENT_RX = /:(?:term|tech):/.freeze
 
         def self.resolve_urn_citations(str, anchor_prefix = nil)
           return str unless str&.include?("{{")
@@ -42,7 +42,7 @@ module Metanorma
 
           str.gsub(URN_CITATION_RX) do
             m = Regexp.last_match
-            id = m[1].sub(URN_SEGMENT_RX, "")
+            id = m[1].sub(/\A.*:(?:term|tech):/, "")
             next m[0] if id.empty?
 
             resolve.call(id, m[2])
